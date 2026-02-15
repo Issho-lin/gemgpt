@@ -1,6 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import LoginPage from "@/pages/login"
-import WorkspacePage from "@/pages/workspace"
+import WorkspaceLayout from "@/pages/workspace"
+import WorkspaceAgentsPage from "@/pages/workspace/agents"
+import WorkspaceToolPage from "@/pages/workspace/tools"
+import WorkspaceTemplatesPage from "@/pages/workspace/templates"
+import MCPServicePage from "@/pages/workspace/mcp"
 import PortalPage from "@/pages/portal"
 import KnowledgePage from "@/pages/knowledge"
 import AccountLayout from "@/pages/account"
@@ -20,7 +24,15 @@ function App() {
         <Route path="/app" element={<MainLayout />}>
           <Route index element={<Navigate to="/app/workspace" replace />} />
           <Route path="portal" element={<PortalPage />} />
-          <Route path="workspace" element={<WorkspacePage />} />
+          
+          <Route path="workspace" element={<WorkspaceLayout />}>
+            <Route index element={<Navigate to="/app/workspace/agents" replace />} />
+            <Route path="agents" element={<WorkspaceAgentsPage />} />
+            <Route path="tools" element={<WorkspaceToolPage />} />
+            <Route path="templates" element={<WorkspaceTemplatesPage />} />
+            <Route path="mcp" element={<MCPServicePage />} />
+          </Route>
+
           <Route path="knowledge" element={<KnowledgePage />} />
           <Route path="account" element={<AccountLayout />}>
             <Route index element={<Navigate to="/app/account/profile" replace />} />
@@ -37,4 +49,3 @@ function App() {
 }
 
 export default App
-

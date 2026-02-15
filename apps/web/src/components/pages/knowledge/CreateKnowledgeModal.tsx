@@ -1,11 +1,10 @@
 import { useState } from "react"
-import { Database, HelpCircle, X, Sparkles, Bot, Image as ImageIcon, Check, ChevronDown } from "lucide-react"
+import { Database, HelpCircle, Sparkles, Bot, Image as ImageIcon } from "lucide-react"
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogClose,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
