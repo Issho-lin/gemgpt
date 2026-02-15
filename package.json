@@ -1,0 +1,11 @@
+{
+  "name": "gemgpt",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

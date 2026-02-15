@@ -1,0 +1,238 @@
+export type ModelType = "llm" | "embedding" | "tts" | "stt" | "rerank"
+
+export interface ModelItem {
+    name: string
+    provider: string
+    providerIcon: string
+    type: ModelType
+    typeLabel: string
+    usedTokens: number
+    tagColor: string
+}
+
+export interface ConfigModelItem {
+    name: string
+    providerIcon: string
+    type: ModelType
+    typeLabel: string
+    tagColor: string
+    contextLength: string
+    capabilities: string[]
+    isActive: boolean
+}
+
+export const MOCK_MODELS: ModelItem[] = [
+    {
+        name: "qwen3-max",
+        provider: "Qwen",
+        providerIcon: "🔮",
+        type: "llm",
+        typeLabel: "语言模型",
+        usedTokens: 128350,
+        tagColor: "blue",
+    },
+    {
+        name: "qwen3-8b",
+        provider: "Qwen",
+        providerIcon: "🔮",
+        type: "llm",
+        typeLabel: "语言模型",
+        usedTokens: 45620,
+        tagColor: "blue",
+    },
+    {
+        name: "text-embedding-v4",
+        provider: "Qwen",
+        providerIcon: "🔮",
+        type: "embedding",
+        typeLabel: "索引模型",
+        usedTokens: 562100,
+        tagColor: "yellow",
+    },
+    {
+        name: "doubao-seed-1-6-thinking-250615",
+        provider: "Doubao",
+        providerIcon: "🌊",
+        type: "llm",
+        typeLabel: "语言模型",
+        usedTokens: 89200,
+        tagColor: "blue",
+    },
+    {
+        name: "deepseek-chat",
+        provider: "DeepSeek",
+        providerIcon: "🐋",
+        type: "llm",
+        typeLabel: "语言模型",
+        usedTokens: 210800,
+        tagColor: "blue",
+    },
+    {
+        name: "deepseek-reasoner",
+        provider: "DeepSeek",
+        providerIcon: "🐋",
+        type: "llm",
+        typeLabel: "语言模型",
+        usedTokens: 175400,
+        tagColor: "blue",
+    },
+    {
+        name: "glm-4-air",
+        provider: "ChatGLM",
+        providerIcon: "🧊",
+        type: "llm",
+        typeLabel: "语言模型",
+        usedTokens: 33500,
+        tagColor: "blue",
+    },
+    {
+        name: "hunyuan-standard",
+        provider: "Hunyuan",
+        providerIcon: "💎",
+        type: "llm",
+        typeLabel: "语言模型",
+        usedTokens: 12750,
+        tagColor: "blue",
+    },
+]
+
+export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
+    {
+        name: "gpt-5.2",
+        providerIcon: "🤖",
+        type: "llm",
+        typeLabel: "语言模型",
+        tagColor: "blue",
+        contextLength: "400k",
+        capabilities: ["视觉", "工具调用"],
+        isActive: true,
+    },
+    {
+        name: "text-embedding-v3",
+        providerIcon: "🔮",
+        type: "embedding",
+        typeLabel: "索引模型",
+        tagColor: "yellow",
+        contextLength: "8k",
+        capabilities: ["向量化"],
+        isActive: true,
+    },
+    {
+        name: "tts-1-hd",
+        providerIcon: "🔊",
+        type: "tts",
+        typeLabel: "语音合成",
+        tagColor: "green",
+        contextLength: "-",
+        capabilities: ["语音合成"],
+        isActive: true,
+    },
+    {
+        name: "whisper-1",
+        providerIcon: "👂",
+        type: "stt",
+        typeLabel: "语音识别",
+        tagColor: "purple",
+        contextLength: "-",
+        capabilities: ["语音识别"],
+        isActive: false,
+    },
+    {
+        name: "bge-reranker-v2-m3",
+        providerIcon: "🔄",
+        type: "rerank",
+        typeLabel: "重排模型",
+        tagColor: "red",
+        contextLength: "16k",
+        capabilities: ["重排"],
+        isActive: false,
+    },
+    {
+        name: "gpt-4.1",
+        providerIcon: "🤖",
+        type: "llm",
+        typeLabel: "语言模型",
+        tagColor: "blue",
+        contextLength: "1000k",
+        capabilities: ["视觉", "工具调用"],
+        isActive: false,
+    },
+]
+
+export const PROVIDER_OPTIONS = [
+    { label: "全部", value: "" },
+    { label: "🔮 Qwen", value: "Qwen" },
+    { label: "🌊 Doubao", value: "Doubao" },
+    { label: "🐋 DeepSeek", value: "DeepSeek" },
+    { label: "🧊 ChatGLM", value: "ChatGLM" },
+    { label: "💎 Hunyuan", value: "Hunyuan" },
+]
+
+export const MODEL_TYPE_OPTIONS: { label: string; value: ModelType | "" }[] = [
+    { label: "全部", value: "" },
+    { label: "语言模型", value: "llm" },
+    { label: "索引模型", value: "embedding" },
+    { label: "语音合成", value: "tts" },
+    { label: "语音识别", value: "stt" },
+    { label: "重排模型", value: "rerank" },
+]
+
+export const TAG_COLORS: Record<string, string> = {
+    blue: "bg-blue-50 text-blue-600 border-blue-200",
+    yellow: "bg-amber-50 text-amber-600 border-amber-200",
+    green: "bg-green-50 text-green-600 border-green-200",
+    purple: "bg-purple-50 text-purple-600 border-purple-200",
+    red: "bg-red-50 text-red-600 border-red-200",
+}
+
+export interface ChannelItem {
+    id: number
+    name: string
+    protocol: string
+    protocolIcon: string
+    status: "enabled" | "disabled"
+    priority: number
+}
+
+export const MOCK_CHANNELS: ChannelItem[] = [
+    {
+        id: 5,
+        name: "硅基系列",
+        protocol: "硅基流动",
+        protocolIcon: "🌌",
+        status: "enabled",
+        priority: 1,
+    },
+    {
+        id: 4,
+        name: "智谱系列",
+        protocol: "智谱清言",
+        protocolIcon: "🧊",
+        status: "enabled",
+        priority: 1,
+    },
+    {
+        id: 3,
+        name: "DeepSeek系列 DeepSeek 系列",
+        protocol: "DeepSeek 深搜",
+        protocolIcon: "🐋",
+        status: "enabled",
+        priority: 1,
+    },
+    {
+        id: 2,
+        name: "豆包系列",
+        protocol: "火山引擎（豆包）",
+        protocolIcon: "🌊",
+        status: "enabled",
+        priority: 1,
+    },
+    {
+        id: 1,
+        name: "千问系列",
+        protocol: "阿里百炼",
+        protocolIcon: "🔮",
+        status: "enabled",
+        priority: 1,
+    },
+]
