@@ -15,7 +15,7 @@ export default function MainLayout() {
    return (
       <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
          {/* 1. Primary Sidebar (Global Nav) */}
-         <aside className="flex w-[64px] flex-col items-center py-4 z-20 shadow-sm" style={{ backgroundColor: '#f9fafc' }}>
+         <aside className="flex w-[64px] flex-col items-center py-6 z-20 shadow-sm" style={{ backgroundColor: '#f9fafc' }}>
             {/* Logo */}
             <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-xl text-blue-600">
                <img src="/logo.png" alt="FastGPT" className="h-[48px] w-[36px]" />

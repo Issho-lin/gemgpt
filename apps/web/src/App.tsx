@@ -7,10 +7,12 @@ import AccountLayout from "@/pages/account"
 import ProfilePage from "@/pages/account/profile"
 import ModelsPage from "@/pages/account/models"
 import MainLayout from "@/components/layout/MainLayout"
+import { Toaster } from "@/components/ui/sonner"
 
 function App() {
   return (
     <BrowserRouter>
+      <Toaster />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
 
