@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, Search, FolderPlus, Import, Languages } from "lucide-react"
-import { toast } from "sonner"
+import { useNavigate } from "react-router-dom"
 import { WorkspaceCategoryType } from "@/constants/workspace"
 
 interface WorkspaceAgentContentProps {
@@ -10,10 +10,11 @@ interface WorkspaceAgentContentProps {
 }
 
 export default function WorkspaceAgentContent({ category = WorkspaceCategoryType.all }: WorkspaceAgentContentProps) {
+    const navigate = useNavigate()
     
     // In a real application, this data would be fetched from a backend based on the category
     // For now, we'll use a simple mapping or just show the same templates to simulate the "structure"
-    const getTemplates = (cat: WorkspaceCategoryType) => {
+    const getTemplates = (_cat: WorkspaceCategoryType) => {
         // Logic to fetch/filter templates based on category can be added here
         // For now, we return the same set as requested ("pages are the same"), 
         // but this structure allows for future differentiation.
@@ -51,20 +52,8 @@ export default function WorkspaceAgentContent({ category = WorkspaceCategoryType
     const templates = getTemplates(category)
 
     const handleCreateClick = () => {
-        // Logic to navigate to different creation pages based on category
-        switch (category) {
-            case WorkspaceCategoryType.all:
-                toast.info("跳转到通用创建页面")
-                break
-            case WorkspaceCategoryType.chat_agent:
-                toast.info("跳转到对话 Agent 创建页面")
-                break
-            case WorkspaceCategoryType.workflow:
-                toast.info("跳转到工作流创建页面")
-                break
-            default:
-                break
-        }
+        const type = category === WorkspaceCategoryType.chat_agent ? "chat" : "workflow"
+        navigate(`/app/workspace/create/agent?type=${type}`)
     }
 
     return (

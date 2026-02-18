@@ -1,7 +1,7 @@
+import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, FolderPlus, Import } from "lucide-react"
-import { toast } from "sonner"
 import { WorkspaceCategoryType, WORKSPACE_CATEGORY_LABELS } from "@/constants/workspace"
 
 interface WorkspaceToolContentProps {
@@ -9,6 +9,7 @@ interface WorkspaceToolContentProps {
 }
 
 export default function WorkspaceToolContent({ category }: WorkspaceToolContentProps) {
+    const navigate = useNavigate()
     
     // Get display title based on category
     const getTitle = () => {
@@ -16,7 +17,13 @@ export default function WorkspaceToolContent({ category }: WorkspaceToolContentP
     }
     
     const handleCreateClick = () => {
-        toast.info("跳转到工具创建页面")
+        let type = "workflow"
+        if (category === WorkspaceCategoryType.tool_http) {
+            type = "http"
+        } else if (category === WorkspaceCategoryType.tool_mcp) {
+            type = "mcp"
+        }
+        navigate(`/app/workspace/create/tool?type=${type}`)
     }
 
     return (

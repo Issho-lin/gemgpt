@@ -24,7 +24,7 @@ export default function MainLayout() {
             {/* Primary Nav Items */}
             <div className="flex flex-1 flex-col gap-2 w-full px-2">
                <PrimaryNavItem icon={<LayoutDashboard size={20} />} label="门户" to="/app/portal" active={location.pathname.startsWith("/app/portal")} />
-               <PrimaryNavItem icon={<Bot size={20} />} label="工作台" to="/app/workspace" active={location.pathname.startsWith("/app/workspace")} />
+               <PrimaryNavItem icon={<Bot size={20} />} label="工作台" to="/app/workspace" active={location.pathname.startsWith("/app/workspace") || location.pathname.startsWith("/app/detail")} />
                <PrimaryNavItem icon={<Database size={20} />} label="知识库" to="/app/knowledge" active={location.pathname.startsWith("/app/knowledge")} />
                <PrimaryNavItem icon={<User size={20} />} label="账号" to="/app/account" active={location.pathname.startsWith("/app/account")} />
             </div>

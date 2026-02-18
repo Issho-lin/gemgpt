@@ -21,7 +21,7 @@ export default function AppSelectionModal({
     onOpenChange,
     onConfirm,
 }: AppSelectionModalProps) {
-    const [selectedApps, setSelectedApps] = useState<any[]>([])
+    const [selectedApps] = useState<any[]>([])
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

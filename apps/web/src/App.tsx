@@ -4,7 +4,10 @@ import WorkspaceLayout from "@/pages/workspace"
 import WorkspaceAgentsPage from "@/pages/workspace/agents"
 import WorkspaceToolPage from "@/pages/workspace/tools"
 import WorkspaceTemplatesPage from "@/pages/workspace/templates"
+import CreateAgentPage from "@/pages/workspace/create/agent"
+import CreateToolPage from "@/pages/workspace/create/tool"
 import MCPServicePage from "@/pages/workspace/mcp"
+import AppDetailPage from "@/pages/app/detail"
 import PortalPage from "@/pages/portal"
 import KnowledgePage from "@/pages/knowledge"
 import AccountLayout from "@/pages/account"
@@ -25,6 +28,9 @@ function App() {
           <Route index element={<Navigate to="/app/workspace" replace />} />
           <Route path="portal" element={<PortalPage />} />
           
+          <Route path="workspace/create/agent" element={<CreateAgentPage />} />
+          <Route path="workspace/create/tool" element={<CreateToolPage />} />
+          <Route path="detail/:appId" element={<AppDetailPage />} />
           <Route path="workspace" element={<WorkspaceLayout />}>
             <Route index element={<Navigate to="/app/workspace/agents" replace />} />
             <Route path="agents" element={<WorkspaceAgentsPage />} />
