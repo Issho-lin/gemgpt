@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,14 +6,11 @@ import { cn } from "@/lib/utils";
 import { TargetHandle, NodePlusButton, NodeHoverActions, NodeMenuWrapper, SourceHandle } from '../components/NodeCommon';
 import { NODE_CONFIG } from '../constants';
 import { 
-    GitFork, 
-    Settings, 
     HelpCircle, 
     MoreHorizontal, 
     ChevronDown,
     BookOpen,
     Bot,
-    Plus,
     MinusCircle
 } from "lucide-react";
 

@@ -13,7 +13,6 @@ import {
     ChevronDown,
     BookOpen,
     MousePointerClick,
-    Sparkles,
     Search,
     Bot
 } from "lucide-react";
