@@ -8,6 +8,7 @@ import CreateAgentPage from "@/pages/workspace/create/agent"
 import CreateToolPage from "@/pages/workspace/create/tool"
 import MCPServicePage from "@/pages/workspace/mcp"
 import AppDetailPage from "@/pages/app/detail"
+import WorkflowPage from "@/pages/app/workflow"
 import PortalPage from "@/pages/portal"
 import KnowledgePage from "@/pages/knowledge"
 import AccountLayout from "@/pages/account"
@@ -24,6 +25,9 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Protected Routes */}
+        {/* Workflow Page (No Layout) */}
+        <Route path="/app/workflow/:appId" element={<WorkflowPage />} />
+
         <Route path="/app" element={<MainLayout />}>
           <Route index element={<Navigate to="/app/workspace" replace />} />
           <Route path="portal" element={<PortalPage />} />

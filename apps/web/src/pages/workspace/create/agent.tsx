@@ -89,7 +89,8 @@ export default function CreateAgentPage() {
             const newAppId = "new-chat-agent"
             navigate(`/app/detail/${newAppId}`)
         } else {
-            navigate("/app/workspace/agents")
+            const newAppId = "new-workflow-agent"
+            navigate(`/app/workflow/${newAppId}`)
         }
     }
 

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Card, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
     Search, 

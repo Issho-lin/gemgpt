@@ -8,7 +8,6 @@ import {
     Box, 
     Cloud,
     ArrowRight,
-    LayoutTemplate,
     Image as ImageIcon,
     MessageSquare
 } from "lucide-react"
