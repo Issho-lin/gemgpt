@@ -82,12 +82,12 @@ export default function CreateAgentPage() {
             toast.error("请输入 Agent 名称")
             return
         }
-        toast.success(`创建 ${selectedType === AgentType.WORKFLOW ? '工作流' : '对话 Agent'} "${name}" 成功`)
+        // toast.success(`创建 ${selectedType === AgentType.WORKFLOW ? '工作流' : '对话 Agent'} "${name}" 成功`)
         
         if (selectedType === AgentType.CHAT) {
             // In a real app, we would get the ID from the backend response
             const newAppId = "new-chat-agent"
-            navigate(`/app/detail/${newAppId}`)
+            navigate(`/app/agent/${newAppId}`)
         } else {
             const newAppId = "new-workflow-agent"
             navigate(`/app/workflow/${newAppId}`)

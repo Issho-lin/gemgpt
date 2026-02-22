@@ -8,6 +8,7 @@ import CreateAgentPage from "@/pages/workspace/create/agent"
 import CreateToolPage from "@/pages/workspace/create/tool"
 import MCPServicePage from "@/pages/workspace/mcp"
 import AppDetailPage from "@/pages/app/detail"
+import AgentDetailPage from "@/pages/app/agent"
 import WorkflowPage from "@/pages/app/workflow"
 import PortalPage from "@/pages/portal"
 import KnowledgePage from "@/pages/knowledge"
@@ -34,7 +35,7 @@ function App() {
           
           <Route path="workspace/create/agent" element={<CreateAgentPage />} />
           <Route path="workspace/create/tool" element={<CreateToolPage />} />
-          <Route path="detail/:appId" element={<AppDetailPage />} />
+          <Route path="agent/:appId" element={<AgentDetailPage />} />
           <Route path="workspace" element={<WorkspaceLayout />}>
             <Route index element={<Navigate to="/app/workspace/agents" replace />} />
             <Route path="agents" element={<WorkspaceAgentsPage />} />
