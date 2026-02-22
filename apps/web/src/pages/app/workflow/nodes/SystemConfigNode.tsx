@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function SystemConfigNode({ data }: { data: any }) {
+export default function SystemConfigNode({ }: { data: any }) {
   return (
     <Card className="w-[340px] border-none shadow-md bg-white overflow-hidden">
       {/* Header */}

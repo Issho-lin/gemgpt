@@ -13,7 +13,7 @@ import {
     Settings
 } from "lucide-react";
 
-export default function HttpRequestNode({ id, data, type }: { id: string, data: any, type?: string }) {
+export default function HttpRequestNode({ id, data }: { id: string, data: any, type?: string }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'Params' | 'Body' | 'Headers'>('Params');
     

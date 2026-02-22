@@ -11,7 +11,6 @@ import {
     MoreHorizontal, 
     BookOpen,
     HelpCircle,
-    MinusCircle,
     Plus,
     Trash2
 } from "lucide-react";
@@ -23,7 +22,7 @@ type FormField = {
     required: boolean;
 };
 
-export default function FormInputNode({ id, data, type }: { id: string, data: any, type?: string }) {
+export default function FormInputNode({ id, data }: { id: string, data: any, type?: string }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     
     // Form fields state

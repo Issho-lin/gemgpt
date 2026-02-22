@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Card, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -44,6 +45,19 @@ const MOCK_DATA: PortalItem[] = [
                         <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.799 L -6.734 42.379 C -8.804 40.439 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z" />
                     </g>
                 </svg>
+            </div>
+        )
+    },
+    {
+        id: "2",
+        type: "agent",
+        title: "智能客服",
+        desc: "24小时在线为您服务",
+        author: "Admin",
+        time: "1小时前",
+        icon: (
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center border border-blue-200 shadow-sm text-blue-600">
+                <Bot size={24} />
             </div>
         )
     }
@@ -131,6 +145,8 @@ function TabButton({ children, active, onClick }: { children: React.ReactNode, a
 }
 
 function PortalCard({ item }: { item: PortalItem }) {
+    const navigate = useNavigate()
+
     const getTypeLabel = (type: PortalItem["type"]) => {
         switch(type) {
             case "agent": return { icon: <Bot size={12} />, label: "对话 Agent" }
@@ -142,7 +158,14 @@ function PortalCard({ item }: { item: PortalItem }) {
     const typeInfo = getTypeLabel(item.type)
 
     return (
-        <Card className="border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group bg-white overflow-hidden flex flex-col">
+        <Card 
+            className="border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group bg-white overflow-hidden flex flex-col"
+            onClick={() => {
+                if (item.type === "agent" || item.type === "workflow") {
+                    navigate(`/chat/${item.id}`)
+                }
+            }}
+        >
             <CardHeader className="p-5 pb-0 flex-row items-start gap-4 space-y-0">
                 <div className="shrink-0">
                     {item.icon}

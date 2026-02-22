@@ -27,7 +27,7 @@ interface Branch {
     conditions: Condition[];
 }
 
-export default function IfElseNode({ id, data, type }: { id: string, data: any, type?: string }) {
+export default function IfElseNode({ id, data }: { id: string, data: any, type?: string }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [branches, setBranches] = useState<Branch[]>([
         { 

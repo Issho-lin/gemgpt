@@ -7,10 +7,10 @@ import WorkspaceTemplatesPage from "@/pages/workspace/templates"
 import CreateAgentPage from "@/pages/workspace/create/agent"
 import CreateToolPage from "@/pages/workspace/create/tool"
 import MCPServicePage from "@/pages/workspace/mcp"
-import AppDetailPage from "@/pages/app/detail"
 import AgentDetailPage from "@/pages/app/agent"
 import WorkflowPage from "@/pages/app/workflow"
 import PortalPage from "@/pages/portal"
+import ChatPage from "@/pages/chat"
 import KnowledgePage from "@/pages/knowledge"
 import AccountLayout from "@/pages/account"
 import ProfilePage from "@/pages/account/profile"
@@ -27,6 +27,7 @@ function App() {
 
         {/* Protected Routes */}
         {/* Workflow Page (No Layout) */}
+        <Route path="/chat/:appId" element={<ChatPage />} />
         <Route path="/app/workflow/:appId" element={<WorkflowPage />} />
 
         <Route path="/app" element={<MainLayout />}>

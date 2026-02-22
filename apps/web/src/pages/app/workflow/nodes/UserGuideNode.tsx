@@ -19,10 +19,9 @@ type Option = {
     value: string;
 };
 
-export default function UserGuideNode({ id, data, type }: { id: string, data: any, type?: string }) {
+export default function UserGuideNode({ id, data }: { id: string, data: any, type?: string }) {
     // Separate menu state for each option handle
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-    const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
     
     // Options state
     const [options, setOptions] = useState<Option[]>([

@@ -17,7 +17,7 @@ import {
     Bot
 } from "lucide-react";
 
-export default function DatasetSearchNode({ id, data, type }: { id: string, data: any, type?: string }) {
+export default function DatasetSearchNode({ id, data }: { id: string, data: any, type?: string }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     
     // Always use searchDataset config for this node

@@ -11,7 +11,6 @@ import {
     HelpCircle,
     ChevronDown,
     Trash2,
-    Code as CodeIcon,
     Maximize2
 } from "lucide-react";
 
@@ -22,7 +21,7 @@ interface VariableItem {
     type: string;
 }
 
-export default function RunCodeNode({ id, data, type }: { id: string, data: any, type?: string }) {
+export default function RunCodeNode({ id, data }: { id: string, data: any, type?: string }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [inputVars, setInputVars] = useState<VariableItem[]>([
         { id: '1', name: 'data1', reference: '', type: 'String' },
@@ -36,17 +35,11 @@ export default function RunCodeNode({ id, data, type }: { id: string, data: any,
     const config = NODE_CONFIG['runCode'];
     const Icon = config.icon;
 
-    const handleAddInputVar = useCallback(() => {
-        setInputVars(prev => [...prev, { id: Date.now().toString(), name: '', reference: '', type: 'Any' }]);
-    }, []);
 
     const handleDeleteInputVar = useCallback((itemId: string) => {
         setInputVars(prev => prev.filter(item => item.id !== itemId));
     }, []);
 
-    const handleAddOutputVar = useCallback(() => {
-        setOutputVars(prev => [...prev, { id: Date.now().toString(), name: '', reference: '', type: 'Any' }]);
-    }, []);
 
     const handleDeleteOutputVar = useCallback((itemId: string) => {
         setOutputVars(prev => prev.filter(item => item.id !== itemId));

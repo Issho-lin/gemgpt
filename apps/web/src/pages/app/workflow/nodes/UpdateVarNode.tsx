@@ -10,8 +10,7 @@ import {
     BookOpen,
     ChevronDown,
     Plus,
-    Trash2,
-    Type
+    Trash2
 } from "lucide-react";
 
 interface UpdateItem {

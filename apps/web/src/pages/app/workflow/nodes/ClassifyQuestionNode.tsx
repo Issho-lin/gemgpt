@@ -19,7 +19,7 @@ type Category = {
     value: string;
 };
 
-export default function ClassifyQuestionNode({ id, data, type }: { id: string, data: any, type?: string }) {
+export default function ClassifyQuestionNode({ id, data }: { id: string, data: any, type?: string }) {
     // Separate menu state for each category handle
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
     
