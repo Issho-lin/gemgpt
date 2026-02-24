@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      String   @default("user")
+  profile   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  modelConfigs   ModelConfig[]
+  knowledgeBases KnowledgeBase[]
+
+  @@map("users")
+}
+
+model ModelConfig {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String   // 例如: "My GPT-4"
+  provider  String   // "openai", "claude", "local"
+  modelName String   // "gpt-4", "claude-3-opus"
+  config    Json     // 存储 API Key, Base URL 等敏感信息
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("model_configs")
+}
+
+model KnowledgeBase {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  type        String   // "file", "url", "text"
+  config      Json?    // 额外配置
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents   Document[]
+
+  @@map("knowledge_bases")
+}
+
+model Document {
+  id              String   @id @default(uuid())
+  knowledgeBaseId String
+  filename        String
+  fileType        String   // "pdf", "txt", "md"
+  status          String   // "pending", "processing", "completed", "failed"
+  createdAt       DateTime @default(now())
+  
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  chunks          KnowledgeChunk[]
+
+  @@map("documents")
+}
+
+model KnowledgeChunk {
+  id         String   @id @default(uuid())
+  documentId String
+  content    String
+  embedding  Unsupported("vector(1536)")? // OpenAI embedding (1536维)
+  metadata   Json?
+  
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("knowledge_chunks")
+}

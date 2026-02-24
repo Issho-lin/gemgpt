@@ -25,7 +25,7 @@ export default function LoginPage() {
     try {
       const response = await api.post('/auth/login', { username, password })
       localStorage.setItem('token', response.data.access_token)
-      navigate('/workspace')
+      navigate('/app/workspace')
     } catch (err) {
       setError("登录失败，请检查用户名或密码")
       console.error(err)

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { 
     Plus, 
     MoreHorizontal, 
@@ -44,7 +44,6 @@ const MOCK_HISTORY: ChatHistoryItem[] = [
 ]
 
 export default function ChatPage() {
-    const { appId } = useParams()
     const navigate = useNavigate()
     const [chatInput, setChatInput] = useState("")
     const [messages, setMessages] = useState<Message[]>([])

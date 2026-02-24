@@ -16,6 +16,7 @@ import AccountLayout from "@/pages/account"
 import ProfilePage from "@/pages/account/profile"
 import ModelsPage from "@/pages/account/models"
 import MainLayout from "@/components/layout/MainLayout"
+import AuthGuard from "@/components/layout/AuthGuard"
 import { Toaster } from "@/components/ui/sonner"
 
 function App() {
@@ -27,10 +28,10 @@ function App() {
 
         {/* Protected Routes */}
         {/* Workflow Page (No Layout) */}
-        <Route path="/chat/:appId" element={<ChatPage />} />
-        <Route path="/app/workflow/:appId" element={<WorkflowPage />} />
+        <Route path="/chat/:appId" element={<AuthGuard><ChatPage /></AuthGuard>} />
+        <Route path="/app/workflow/:appId" element={<AuthGuard><WorkflowPage /></AuthGuard>} />
 
-        <Route path="/app" element={<MainLayout />}>
+        <Route path="/app" element={<AuthGuard><MainLayout /></AuthGuard>}>
           <Route index element={<Navigate to="/app/workspace" replace />} />
           <Route path="portal" element={<PortalPage />} />
           
