@@ -144,7 +144,7 @@ export default function ModelChannelTab() {
     ], [])
 
     return (
-        <div className="flex flex-col h-full gap-4 overflow-y-auto">
+        <div className="flex flex-col h-full gap-4">
             <div className="flex justify-end items-center">
                 <Button
                     className="h-9 px-4 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600"

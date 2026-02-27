@@ -4,6 +4,7 @@ export interface ModelItem {
     name: string
     provider: string
     providerIcon: string
+    avatar?: string
     type: ModelType
     typeLabel: string
     usedTokens: number
@@ -11,13 +12,20 @@ export interface ModelItem {
 }
 
 export interface ConfigModelItem {
+    id: string
     name: string
+    modelName: string    // 真实模型标识符，如 "gpt-4o"
+    provider: string
     providerIcon: string
+    avatar?: string      // Provider 头像 URL（来自 FastGPT Plugin）
     type: ModelType
     typeLabel: string
     tagColor: string
-    contextLength: string
-    capabilities: string[]
+    contextLength?: string
+    capabilities?: string[]
+    contextToken?: number
+    vision?: boolean
+    toolChoice?: boolean
     isActive: boolean
 }
 
@@ -98,7 +106,10 @@ export const MOCK_MODELS: ModelItem[] = [
 
 export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
     {
+        id: "mock-1",
         name: "gpt-5.2",
+        modelName: "gpt-5.2",
+        provider: "OpenAI",
         providerIcon: "🤖",
         type: "llm",
         typeLabel: "语言模型",
@@ -108,7 +119,10 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         isActive: true,
     },
     {
+        id: "mock-2",
         name: "text-embedding-v3",
+        modelName: "text-embedding-v3",
+        provider: "OpenAI",
         providerIcon: "🔮",
         type: "embedding",
         typeLabel: "索引模型",
@@ -118,7 +132,10 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         isActive: true,
     },
     {
+        id: "mock-3",
         name: "tts-1-hd",
+        modelName: "tts-1-hd",
+        provider: "OpenAI",
         providerIcon: "🔊",
         type: "tts",
         typeLabel: "语音合成",
@@ -128,7 +145,10 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         isActive: true,
     },
     {
-        name: "whisper-1",
+        id: "mock-4",
+        name: "Whisper1",
+        modelName: "whisper-1",
+        provider: "OpenAI",
         providerIcon: "👂",
         type: "stt",
         typeLabel: "语音识别",
@@ -138,7 +158,10 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         isActive: false,
     },
     {
+        id: "mock-5",
         name: "bge-reranker-v2-m3",
+        modelName: "bge-reranker-v2-m3",
+        provider: "OpenAI",
         providerIcon: "🔄",
         type: "rerank",
         typeLabel: "重排模型",
@@ -148,7 +171,10 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         isActive: false,
     },
     {
+        id: "mock-6",
         name: "gpt-4.1",
+        modelName: "gpt-4.1",
+        provider: "OpenAI",
         providerIcon: "🤖",
         type: "llm",
         typeLabel: "语言模型",

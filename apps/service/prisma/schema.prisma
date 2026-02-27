@@ -24,6 +24,7 @@ model User {
 
   modelConfigs   ModelConfig[]
   knowledgeBases KnowledgeBase[]
+  modelLogs      ModelLog[]
 
   @@map("users")
 }
@@ -40,8 +41,29 @@ model ModelConfig {
   updatedAt DateTime @updatedAt
   
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modelLogs ModelLog[]
 
   @@map("model_configs")
+}
+
+model ModelLog {
+  id           String   @id @default(uuid())
+  userId       String
+  modelId      String?
+  modelName    String
+  provider     String
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  totalTokens  Int      @default(0)
+  duration     Int      // ms
+  status       String   // "success", "failed"
+  error        String?
+  createdAt    DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modelConfig  ModelConfig? @relation(fields: [modelId], references: [id])
+
+  @@map("model_logs")
 }
 
 model KnowledgeBase {
@@ -84,4 +106,20 @@ model KnowledgeChunk {
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@map("knowledge_chunks")
+}
+
+model AppModel {
+  id        String   @id @default(uuid())
+  type      String   // "llm", "vector", "audio", etc.
+  provider  String
+  model     String   @unique // "gpt-5"
+  name      String
+  
+  charsPointsPrice Int? @default(0)
+  config    Json
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("app_models")
 }

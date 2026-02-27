@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react"
-import { Search, ListFilter, HelpCircle } from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import { Search, ListFilter, HelpCircle, Loader2 } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { subDays } from "date-fns"
 import { DateRangePicker } from "@/components/common/DateRangePicker"
@@ -15,6 +15,8 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import ModelLogDetailModal from "./ModelLogDetailModal"
+import api from "@/lib/api"
+import { toast } from "sonner"
 
 export interface LogItem {
     id: string
@@ -30,75 +32,14 @@ export interface LogItem {
     ttft?: string
 }
 
-const MOCK_LOGS: LogItem[] = [
-    {
-        id: "1",
-        channelName: "千问系列",
-        modelName: "qwen3-max",
-        tokens: "9 / 11",
-        duration: "1.78s",
-        status: 200,
-        requestTime: "2026-02-13 16:16:03",
-        requestIp: "192.168.1.101",
-        endpoint: "/v1/chat/completions",
-        ttft: "0.45s"
-    },
-    {
-        id: "2",
-        channelName: "OpenAI",
-        modelName: "gpt-4",
-        tokens: "150 / 80",
-        duration: "2.34s",
-        status: 200,
-        requestTime: "2026-02-13 16:15:22",
-        requestIp: "10.0.0.5",
-        endpoint: "/v1/chat/completions",
-        ttft: "0.82s"
-    },
-    {
-        id: "3",
-        channelName: "Claude",
-        modelName: "claude-3-opus",
-        tokens: "200 / 400",
-        duration: "5.12s",
-        status: 200,
-        requestTime: "2026-02-13 16:14:10",
-        requestIp: "172.16.254.1",
-        endpoint: "/v1/messages",
-        ttft: "1.2s"
-    },
-    {
-        id: "4",
-        channelName: "硅基流动",
-        modelName: "deepseek-coder",
-        tokens: "50 / 120",
-        duration: "1.05s",
-        status: 500,
-        requestTime: "2026-02-13 16:10:45",
-        error: `{"error":{"code":"ModelNotOpen","message":"Your account has not activated the model deepseek-coder. Please activate the model service in the Ark Console.","type":"Not Found"}}`,
-        requestIp: "192.168.65.1",
-        endpoint: "/v1/chat/completions",
-        ttft: "-"
-    }
-]
-
 const CHANNEL_OPTIONS = [
-    { label: "千问系列", value: "千问系列" },
-    { label: "OpenAI", value: "OpenAI" },
-    { label: "Claude", value: "Claude" },
-    { label: "硅基流动", value: "硅基流动" },
-]
-
-const MODEL_OPTIONS = [
-    { label: "qwen3-max", value: "qwen3-max" },
-    { label: "gpt-4", value: "gpt-4" },
-    { label: "claude-3-opus", value: "claude-3-opus" },
-    { label: "deepseek-coder", value: "deepseek-coder" },
+    { label: "AIProxy", value: "aiproxy" },
+    { label: "OpenAI", value: "openai" },
 ]
 
 const STATUS_OPTIONS = [
-    { label: "成功", value: "200" },
-    { label: "失败", value: "error" },
+    { label: "成功", value: "success" },
+    { label: "失败", value: "failed" },
 ]
 
 export default function ModelLogTab() {
@@ -108,11 +49,45 @@ export default function ModelLogTab() {
     const [status, setStatus] = useState("")
     // Date range state
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
-        from: subDays(new Date(), 1),
+        from: subDays(new Date(), 7),
         to: new Date()
     })
     const [selectedLog, setSelectedLog] = useState<LogItem | undefined>(undefined)
     const [showDetailModal, setShowDetailModal] = useState(false)
+    const [logs, setLogs] = useState<LogItem[]>([])
+    const [loading, setLoading] = useState(true)
+    const [page, setPage] = useState(1)
+    const [total, setTotal] = useState(0)
+
+    useEffect(() => {
+        fetchLogs()
+    }, [page, channel, status]) // Basic dependencies, could add more filters
+
+    const fetchLogs = async () => {
+        setLoading(true)
+        try {
+            const res = await api.get(`/models/logs?page=${page}&limit=20`)
+            const mappedLogs = res.data.logs.map((log: any) => ({
+                id: log.id,
+                channelName: log.provider || 'Unknown',
+                modelName: log.modelName,
+                tokens: `${log.inputTokens} / ${log.outputTokens}`,
+                duration: `${log.duration}ms`,
+                status: log.status === 'success' ? 200 : 500,
+                requestTime: new Date(log.createdAt).toLocaleString(),
+                error: log.error,
+                requestIp: "-", // Not stored yet
+                endpoint: "-", // Not stored yet
+                ttft: "-" // Not stored yet
+            }))
+            setLogs(mappedLogs)
+            setTotal(res.data.total)
+        } catch (error) {
+            toast.error("获取日志失败")
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const columns: ColumnDef<LogItem>[] = useMemo(() => [
         {
@@ -144,7 +119,7 @@ export default function ModelLogTab() {
                         "font-medium",
                         item.status === 200 ? "text-green-500" : "text-red-500"
                     )}>
-                        {item.status}
+                        {item.status === 200 ? "成功" : "失败"}
                     </span>
                     {item.status !== 200 && (
                         <TooltipProvider>
@@ -153,18 +128,7 @@ export default function ModelLogTab() {
                                     <HelpCircle className="h-3.5 w-3.5 text-slate-400 cursor-help" />
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-[400px]">
-                                    {(() => {
-                                        try {
-                                            const errorObj = JSON.parse(item.error || "")
-                                            return (
-                                                <pre className="whitespace-pre-wrap font-mono text-xs overflow-auto max-h-[300px]">
-                                                    {JSON.stringify(errorObj, null, 2)}
-                                                </pre>
-                                            )
-                                        } catch (e) {
-                                            return <div className="break-all">{item.error || "未知错误"}</div>
-                                        }
-                                    })()}
+                                    <div className="break-all">{item.error || "未知错误"}</div>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
@@ -198,20 +162,16 @@ export default function ModelLogTab() {
         }
     ], [])
 
+    // Client-side filtering for search (optional, better to do server-side)
     const filteredLogs = useMemo(() => {
-        return MOCK_LOGS.filter(item => {
-            const matchesSearch = search ? item.id.includes(search) : true
-            const matchesChannel = channel ? item.channelName === channel : true
-            const matchesModel = model ? item.modelName === model : true
-            const matchesStatus = status
-                ? (status === "200" ? item.status === 200 : item.status !== 200)
-                : true
-            return matchesSearch && matchesChannel && matchesModel && matchesStatus
+        return logs.filter(item => {
+            const matchesSearch = search ? item.id.includes(search) || item.modelName.includes(search) : true
+            return matchesSearch
         })
-    }, [search, channel, model, status])
+    }, [logs, search])
 
     return (
-        <div className="flex flex-col h-full gap-4 overflow-y-auto">
+        <div className="flex flex-col h-full gap-4">
             <div className="flex items-center flex-wrap gap-4 bg-white p-1">
                 <DateRangePicker
                     value={dateRange}
@@ -229,12 +189,12 @@ export default function ModelLogTab() {
                     width="w-[160px]"
                 />
 
-                <SelectDropdown
+                {/* Model options should ideally be dynamic based on available models */}
+                <Input 
                     value={model}
-                    onChange={setModel}
-                    options={MODEL_OPTIONS}
+                    onChange={(e) => setModel(e.target.value)}
                     placeholder="模型名"
-                    width="w-[160px]"
+                    className="w-[160px] h-9"
                 />
 
                 <SelectDropdown
@@ -252,27 +212,56 @@ export default function ModelLogTab() {
                     <Input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="根据 requestId 搜索"
+                        placeholder="根据 ID 或模型搜索"
                         className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
                     />
                 </div>
+                <Button variant="outline" size="sm" onClick={fetchLogs}>
+                    刷新
+                </Button>
             </div>
 
             {/* Data Table */}
-            <div className="bg-white rounded-lg overflow-hidden flex flex-col">
-                <DataTable
-                    columns={columns}
-                    dataSource={filteredLogs}
-                    rowKey="id"
-                    className="w-full"
-                    rowClassName="hover:bg-slate-50/50 transition-colors group"
-                />
+            <div className="bg-white rounded-lg overflow-hidden flex flex-col min-h-[200px]">
+                {loading ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="animate-spin h-8 w-8 text-muted-foreground" />
+                    </div>
+                ) : (
+                    <DataTable
+                        columns={columns}
+                        dataSource={filteredLogs}
+                        rowKey="id"
+                        className="w-full"
+                        rowClassName="hover:bg-slate-50/50 transition-colors group"
+                        emptyText="暂无日志记录"
+                    />
+                )}
             </div>
 
-            {/* Footer */}
-            <div className="text-center text-xs text-slate-400 py-2">
-                已加载全部
+            {/* Pagination Controls */}
+            <div className="flex justify-center py-4 space-x-2">
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setPage(p => Math.max(1, p - 1))} 
+                    disabled={page === 1 || loading}
+                >
+                    上一页
+                </Button>
+                <span className="py-2 text-sm text-muted-foreground">
+                    第 {page} 页 / 共 {Math.ceil(total / 20) || 1} 页
+                </span>
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setPage(p => p + 1)} 
+                    disabled={page * 20 >= total || loading}
+                >
+                    下一页
+                </Button>
             </div>
+
             <ModelLogDetailModal
                 open={showDetailModal}
                 onOpenChange={setShowDetailModal}

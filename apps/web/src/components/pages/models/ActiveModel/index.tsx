@@ -1,10 +1,9 @@
-import { useState, useMemo } from "react"
-import { Search, Copy, Check } from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import { Search, Copy, Check, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DataTable, type ColumnDef } from "@/components/common/DataTable"
 import { SelectDropdown } from "@/components/common/SelectDropdown"
 import {
-    MOCK_MODELS,
     PROVIDER_OPTIONS,
     MODEL_TYPE_OPTIONS,
     TAG_COLORS,
@@ -12,6 +11,8 @@ import {
     type ModelItem,
 } from "../constants"
 import { Input } from "@/components/ui/input"
+import api from "@/lib/api"
+import { toast } from "sonner"
 
 function ModelNameCell({ model }: { model: ModelItem }) {
     const [copied, setCopied] = useState(false)
@@ -75,9 +76,40 @@ export default function ActiveModelTab() {
     const [provider, setProvider] = useState("")
     const [modelType, setModelType] = useState<ModelType | "">("")
     const [search, setSearch] = useState("")
+    const [models, setModels] = useState<ModelItem[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetchModels()
+    }, [])
+
+    const fetchModels = async () => {
+        try {
+            const res = await api.get("/models")
+            // Filter only active models and map to UI structure
+            const activeModels = res.data
+                .filter((m: any) => m.isActive)
+                .map((m: any) => ({
+                    name: m.name,
+                    provider: m.provider,
+                    providerIcon: m.provider === 'openai' ? '🤖' : '🔌', // Simple mapping
+                    type: "llm", // Defaulting to LLM for now as backend doesn't store type yet
+                    typeLabel: "对话模型",
+                    tagColor: "blue",
+                    usedTokens: 0, // Backend needs to provide this
+                    contextLength: "4k", // Placeholder
+                    capabilities: ["对话"]
+                }))
+            setModels(activeModels)
+        } catch (error) {
+            toast.error("获取模型列表失败")
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const filteredModels = useMemo(() => {
-        return MOCK_MODELS.filter((model) => {
+        return models.filter((model) => {
             const providerMatch = provider ? model.provider === provider : true
             const typeMatch = modelType ? model.type === modelType : true
             const searchMatch = search
@@ -85,10 +117,14 @@ export default function ActiveModelTab() {
                 : true
             return providerMatch && typeMatch && searchMatch
         })
-    }, [provider, modelType, search])
+    }, [models, provider, modelType, search])
+
+    if (loading) {
+        return <div className="flex justify-center py-20"><Loader2 className="animate-spin h-8 w-8 text-muted-foreground" /></div>
+    }
 
     return (
-        <div className="flex flex-col h-full gap-4 overflow-y-auto">
+        <div className="flex flex-col h-full gap-4">
             {/* Filters */}
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">

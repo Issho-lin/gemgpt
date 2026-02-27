@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:4000', // Adjust if backend runs on a different port
+  baseURL: 'http://localhost:3001/api', // Updated to match backend configuration
 });
 
 // Optional: Add request interceptor to include auth token

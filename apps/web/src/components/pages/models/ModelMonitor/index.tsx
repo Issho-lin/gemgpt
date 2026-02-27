@@ -140,7 +140,7 @@ export default function ModelMonitorTab() {
     const [tokensGranularity, setTokensGranularity] = useState("hourly")
 
     return (
-        <div className="flex flex-col h-full gap-4 overflow-y-auto pb-4">
+        <div className="flex flex-col h-full gap-4 pb-4">
             {/* Filter Bar */}
             {/* Filter Bar */}
             <div className="flex items-center flex-wrap gap-4 bg-white p-1">

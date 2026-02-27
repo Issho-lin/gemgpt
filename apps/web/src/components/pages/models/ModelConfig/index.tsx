@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react"
-import { Search, Send, Settings } from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Search, Send, Settings, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DataTable, type ColumnDef } from "@/components/common/DataTable"
 import DefaultModelModal from "./DefaultModelModal"
@@ -11,7 +12,6 @@ import EditSTTModelModal from "./EditSTTModelModal"
 import EditReRankModelModal from "./EditReRankModelModal"
 import { SelectDropdown } from "@/components/common/SelectDropdown"
 import {
-    MOCK_CONFIG_MODELS,
     PROVIDER_OPTIONS,
     MODEL_TYPE_OPTIONS,
     TAG_COLORS,
@@ -31,12 +31,15 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
+import api from "@/lib/api"
+import { toast } from "sonner"
 
 export default function ModelConfigTab() {
     const [provider, setProvider] = useState("")
     const [modelType, setModelType] = useState<ModelType | "">("")
     const [search, setSearch] = useState("")
-    const [models, setModels] = useState(MOCK_CONFIG_MODELS)
+    const [models, setModels] = useState<ConfigModelItem[]>([])
+    const [loading, setLoading] = useState(true)
     const [showDefaultModal, setShowDefaultModal] = useState(false)
     const [showConfigModal, setShowConfigModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
@@ -46,12 +49,74 @@ export default function ModelConfigTab() {
     const [showReRankEditModal, setShowReRankEditModal] = useState(false)
     const [isEdit, setIsEdit] = useState(false)
 
+    useEffect(() => {
+        fetchConfigs()
+    }, [])
+
+    const fetchConfigs = async () => {
+        try {
+            const res = await api.get("/core/ai/model/list")
+
+            // AppModel 字段: { id, type, provider, model, name, charsPointsPrice, config }
+            // 后端 type: "llm" | "vector" | "tts" | "stt" | "rerank"
+            // 前端 ModelType: "llm" | "embedding" | "tts" | "stt" | "rerank"
+            const TYPE_MAP: Record<string, { type: string; typeLabel: string; tagColor: string }> = {
+                llm: { type: "llm", typeLabel: "语言模型", tagColor: "blue" },
+                vector: { type: "embedding", typeLabel: "索引模型", tagColor: "yellow" },
+                tts: { type: "tts", typeLabel: "语音合成", tagColor: "green" },
+                stt: { type: "stt", typeLabel: "语音识别", tagColor: "purple" },
+                rerank: { type: "rerank", typeLabel: "重排模型", tagColor: "red" },
+            }
+
+            const PROVIDER_ICON_MAP: Record<string, string> = {
+                OpenAI: "🤖",
+                Anthropic: "🧠",
+                Google: "🔵",
+                DeepSeek: "🐋",
+                Qwen: "🔮",
+                Doubao: "🌊",
+                ChatGLM: "🧊",
+                Hunyuan: "💎",
+            }
+
+            const mappedModels = res.data.map((m: any) => {
+                const typeInfo = TYPE_MAP[m.type] ?? { type: m.type, typeLabel: m.type, tagColor: "blue" }
+                return {
+                    id: m.id,
+                    name: m.name,
+                    modelName: m.model, // 真实模型标识符，如 "gpt-4o"
+                    provider: m.provider,
+                    providerIcon: PROVIDER_ICON_MAP[m.provider] ?? "🔌",
+                    avatar: m.avatar,
+                    type: typeInfo.type,
+                    typeLabel: typeInfo.typeLabel,
+                    tagColor: typeInfo.tagColor,
+                    isActive: true, // AppModel 无 isActive 字段，默认启用
+                    contextToken: m.contextToken,
+                    vision: m.vision,
+                    toolChoice: m.toolChoice
+                }
+            })
+            setModels(mappedModels)
+        } catch (error) {
+            toast.error("获取模型列表失败")
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const activeCount = useMemo(() => models.filter((m) => m.isActive).length, [models])
 
-    const toggleActive = (name: string) => {
-        setModels((prev) =>
-            prev.map((m) => (m.name === name ? { ...m, isActive: !m.isActive } : m))
-        )
+    const toggleActive = async (id: string, currentStatus: boolean) => {
+        try {
+            await api.patch(`/models/${id}`, { isActive: !currentStatus })
+            setModels((prev) =>
+                prev.map((m) => (m.id === id ? { ...m, isActive: !currentStatus } : m))
+            )
+            toast.success(currentStatus ? "模型已禁用" : "模型已启用")
+        } catch (error) {
+            toast.error("状态更新失败")
+        }
     }
 
     const columns: ColumnDef<ConfigModelItem>[] = useMemo(() => [
@@ -64,27 +129,29 @@ export default function ModelConfigTab() {
             key: "name",
             render: (_, model) => (
                 <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2">
-                        <span className="text-base leading-none">{model.providerIcon}</span>
+                    <div className="flex items-center gap-3">
+                        <Avatar className="h-6 w-6">
+                            <AvatarImage src={model.avatar} />
+                            <AvatarFallback>{model.providerIcon}</AvatarFallback>
+                        </Avatar>
                         <span className="text-sm font-medium text-slate-800">{model.name}</span>
                     </div>
                     <div className="flex items-center gap-1.5 ml-7">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-600 border border-blue-200">
-                            {model.contextLength}
-                        </span>
-                        {model.capabilities.map((cap) => {
-                            const capColor = cap === "工具调用"
-                                ? "bg-purple-50 text-purple-600 border-purple-200"
-                                : "bg-green-50 text-green-600 border-green-200"
-                            return (
-                                <span
-                                    key={cap}
-                                    className={cn("inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border", capColor)}
-                                >
-                                    {cap}
-                                </span>
-                            )
-                        })}
+                        {model.contextToken && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-600 border border-blue-200">
+                                {Math.floor(model.contextToken / 1000)}k
+                            </span>
+                        )}
+                        {model.vision && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-green-50 text-green-600 border border-green-200">
+                                视觉
+                            </span>
+                        )}
+                        {model.toolChoice && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-600 border border-purple-200">
+                                工具调用
+                            </span>
+                        )}
                     </div>
                 </div>
             ),
@@ -108,7 +175,7 @@ export default function ModelConfigTab() {
             key: "active",
             render: (_, model) => (
                 <button
-                    onClick={() => toggleActive(model.name)}
+                    onClick={() => toggleActive(model.id, model.isActive)}
                     className={cn(
                         "relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer",
                         model.isActive ? "bg-blue-500" : "bg-slate-200"
@@ -148,6 +215,7 @@ export default function ModelConfigTab() {
                                     className="p-1.5 rounded-md text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all cursor-pointer"
                                     onClick={() => {
                                         setIsEdit(true)
+                                        // TODO: Pass model data to edit modal
                                         if (model.type === "llm") {
                                             setShowEditModal(true)
                                         } else if (model.type === "embedding") {
@@ -172,7 +240,7 @@ export default function ModelConfigTab() {
                 </div>
             ),
         },
-    ], [activeCount, toggleActive])
+    ], [activeCount]) // Removed toggleActive from dependency array to avoid re-renders causing issues
 
     const filteredModels = useMemo(() => {
         return models.filter((model) => {
@@ -185,8 +253,12 @@ export default function ModelConfigTab() {
     }, [models, modelType, search])
 
 
+    if (loading) {
+        return <div className="flex justify-center py-20"><Loader2 className="animate-spin h-8 w-8 text-muted-foreground" /></div>
+    }
+
     return (
-        <div className="flex flex-col h-full gap-4 overflow-y-auto">
+        <div className="flex flex-col h-full gap-4">
             {/* Top bar: filters + action buttons */}
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
@@ -275,7 +347,7 @@ export default function ModelConfigTab() {
             <DataTable
                 columns={columns}
                 dataSource={filteredModels}
-                rowKey="name"
+                rowKey="id"
                 emptyText="暂无匹配的模型"
                 className="w-full"
             />
