@@ -20,7 +20,7 @@ export function SelectDropdown({
 }: {
     value: string
     onChange: (value: string) => void
-    options: { label: string; value: string }[]
+    options: { label: React.ReactNode; value: string }[]
     placeholder?: string
     width?: string
     allowClear?: boolean
@@ -68,7 +68,7 @@ export function SelectDropdown({
                     )}
                 </SelectPrimitive.Icon>
             </SelectPrimitive.Trigger>
-            <SelectContent>
+            <SelectContent className="max-h-[340px]">
                 {options.length > 0 ? (
                     options.map((opt) => (
                         <SelectItem key={opt.value || "__all__"} value={opt.value || "__all__"}>

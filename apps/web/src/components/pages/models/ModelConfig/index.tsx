@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Send, Settings, Loader2 } from "lucide-react"
+import { Search, Send, Settings, Loader2, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DataTable, type ColumnDef } from "@/components/common/DataTable"
 import DefaultModelModal from "./DefaultModelModal"
@@ -12,7 +12,6 @@ import EditSTTModelModal from "./EditSTTModelModal"
 import EditReRankModelModal from "./EditReRankModelModal"
 import { SelectDropdown } from "@/components/common/SelectDropdown"
 import {
-    PROVIDER_OPTIONS,
     MODEL_TYPE_OPTIONS,
     TAG_COLORS,
     type ModelType,
@@ -39,6 +38,7 @@ export default function ModelConfigTab() {
     const [modelType, setModelType] = useState<ModelType | "">("")
     const [search, setSearch] = useState("")
     const [models, setModels] = useState<ConfigModelItem[]>([])
+    const [providerOptions, setProviderOptions] = useState<{ label: React.ReactNode; value: string }[]>([{ label: "全部", value: "" }])
     const [loading, setLoading] = useState(true)
     const [showDefaultModal, setShowDefaultModal] = useState(false)
     const [showConfigModal, setShowConfigModal] = useState(false)
@@ -51,7 +51,31 @@ export default function ModelConfigTab() {
 
     useEffect(() => {
         fetchConfigs()
+        fetchProviders()
     }, [])
+
+    const fetchProviders = async () => {
+        try {
+            const res = await api.get("/core/ai/model/providers")
+            const options = res.data.map((p: any) => ({
+                value: p.provider,
+                label: (
+                    <div className="flex items-center gap-2">
+                        <Avatar className="h-4 w-4">
+                            <AvatarImage src={p.avatar} />
+                            <AvatarFallback className="text-[10px]">
+                                {p.name?.charAt(0) || p.provider?.charAt(0)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <span>{p.provider}</span>
+                    </div>
+                )
+            }))
+            setProviderOptions([{ label: "全部", value: "" }, ...options])
+        } catch (error) {
+            console.error("获取模型提供商失败", error)
+        }
+    }
 
     const fetchConfigs = async () => {
         try {
@@ -62,21 +86,10 @@ export default function ModelConfigTab() {
             // 前端 ModelType: "llm" | "embedding" | "tts" | "stt" | "rerank"
             const TYPE_MAP: Record<string, { type: string; typeLabel: string; tagColor: string }> = {
                 llm: { type: "llm", typeLabel: "语言模型", tagColor: "blue" },
-                vector: { type: "embedding", typeLabel: "索引模型", tagColor: "yellow" },
+                embedding: { type: "embedding", typeLabel: "索引模型", tagColor: "yellow" },
                 tts: { type: "tts", typeLabel: "语音合成", tagColor: "green" },
                 stt: { type: "stt", typeLabel: "语音识别", tagColor: "purple" },
                 rerank: { type: "rerank", typeLabel: "重排模型", tagColor: "red" },
-            }
-
-            const PROVIDER_ICON_MAP: Record<string, string> = {
-                OpenAI: "🤖",
-                Anthropic: "🧠",
-                Google: "🔵",
-                DeepSeek: "🐋",
-                Qwen: "🔮",
-                Doubao: "🌊",
-                ChatGLM: "🧊",
-                Hunyuan: "💎",
             }
 
             const mappedModels = res.data.map((m: any) => {
@@ -86,17 +99,34 @@ export default function ModelConfigTab() {
                     name: m.name,
                     modelName: m.model, // 真实模型标识符，如 "gpt-4o"
                     provider: m.provider,
-                    providerIcon: PROVIDER_ICON_MAP[m.provider] ?? "🔌",
                     avatar: m.avatar,
                     type: typeInfo.type,
                     typeLabel: typeInfo.typeLabel,
                     tagColor: typeInfo.tagColor,
-                    isActive: true, // AppModel 无 isActive 字段，默认启用
+                    isActive: m.isActive ?? false,
+                    isCustom: m.isCustom ?? false,
                     contextToken: m.contextToken,
                     vision: m.vision,
-                    toolChoice: m.toolChoice
+                    toolChoice: m.toolChoice,
+                    order: m.order ?? 9999
                 }
             })
+
+            const TYPE_ORDER = ["llm", "embedding", "tts", "stt", "rerank"]
+            mappedModels.sort((a: any, b: any) => {
+                // 先按供应商 order 排
+                const orderA = a.order
+                const orderB = b.order
+                if (orderA !== orderB) return orderA - orderB
+
+                // 供应商 order 相同，再按模型类型排
+                const typeA = TYPE_ORDER.indexOf(a.type)
+                const typeB = TYPE_ORDER.indexOf(b.type)
+                if (typeA !== typeB) return typeA - typeB
+
+                return 0
+            })
+
             setModels(mappedModels)
         } catch (error) {
             toast.error("获取模型列表失败")
@@ -109,13 +139,25 @@ export default function ModelConfigTab() {
 
     const toggleActive = async (id: string, currentStatus: boolean) => {
         try {
-            await api.patch(`/models/${id}`, { isActive: !currentStatus })
+            await api.patch("/core/ai/model/toggle", { model: id, isActive: !currentStatus })
             setModels((prev) =>
                 prev.map((m) => (m.id === id ? { ...m, isActive: !currentStatus } : m))
             )
             toast.success(currentStatus ? "模型已禁用" : "模型已启用")
         } catch (error) {
             toast.error("状态更新失败")
+        }
+    }
+
+    const deleteModel = async (id: string) => {
+        if (!window.confirm("确定要删除该自定义模型吗？")) return
+        try {
+            await api.delete("/core/ai/model/delete", { params: { id } })
+            setModels((prev) => prev.filter((m) => m.id !== id))
+            toast.success("模型已删除")
+            // 如果需要重新拉取数据以保证准确性，可以调用 fetchConfigs()
+        } catch (error) {
+            toast.error("删除模型失败")
         }
     }
 
@@ -132,7 +174,7 @@ export default function ModelConfigTab() {
                     <div className="flex items-center gap-3">
                         <Avatar className="h-6 w-6">
                             <AvatarImage src={model.avatar} />
-                            <AvatarFallback>{model.providerIcon}</AvatarFallback>
+                            <AvatarFallback>{model.provider?.charAt(0) || "M"}</AvatarFallback>
                         </Avatar>
                         <span className="text-sm font-medium text-slate-800">{model.name}</span>
                     </div>
@@ -237,20 +279,40 @@ export default function ModelConfigTab() {
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
+                    {model.isCustom && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        className="p-1.5 rounded-md text-red-400 hover:text-red-500 hover:bg-red-50 transition-all cursor-pointer"
+                                        onClick={() => deleteModel(model.id)}
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    删除模型
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
                 </div>
             ),
         },
     ], [activeCount]) // Removed toggleActive from dependency array to avoid re-renders causing issues
 
+
+
     const filteredModels = useMemo(() => {
         return models.filter((model) => {
+            const providerMatch = provider ? model.provider === provider : true
             const typeMatch = modelType ? model.type === modelType : true
             const searchMatch = search
                 ? model.name.toLowerCase().includes(search.toLowerCase())
                 : true
-            return typeMatch && searchMatch
+            return providerMatch && typeMatch && searchMatch
         })
-    }, [models, modelType, search])
+    }, [models, provider, modelType, search])
 
 
     if (loading) {
@@ -266,7 +328,7 @@ export default function ModelConfigTab() {
                     <SelectDropdown
                         value={provider}
                         onChange={setProvider}
-                        options={PROVIDER_OPTIONS}
+                        options={providerOptions}
                         width="w-[180px]"
                     />
                 </div>

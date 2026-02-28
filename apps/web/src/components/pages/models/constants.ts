@@ -3,7 +3,6 @@ export type ModelType = "llm" | "embedding" | "tts" | "stt" | "rerank"
 export interface ModelItem {
     name: string
     provider: string
-    providerIcon: string
     avatar?: string
     type: ModelType
     typeLabel: string
@@ -16,7 +15,6 @@ export interface ConfigModelItem {
     name: string
     modelName: string    // 真实模型标识符，如 "gpt-4o"
     provider: string
-    providerIcon: string
     avatar?: string      // Provider 头像 URL（来自 FastGPT Plugin）
     type: ModelType
     typeLabel: string
@@ -27,13 +25,14 @@ export interface ConfigModelItem {
     vision?: boolean
     toolChoice?: boolean
     isActive: boolean
+    isCustom?: boolean
+    order?: number
 }
 
 export const MOCK_MODELS: ModelItem[] = [
     {
         name: "qwen3-max",
         provider: "Qwen",
-        providerIcon: "🔮",
         type: "llm",
         typeLabel: "语言模型",
         usedTokens: 128350,
@@ -42,7 +41,6 @@ export const MOCK_MODELS: ModelItem[] = [
     {
         name: "qwen3-8b",
         provider: "Qwen",
-        providerIcon: "🔮",
         type: "llm",
         typeLabel: "语言模型",
         usedTokens: 45620,
@@ -51,7 +49,6 @@ export const MOCK_MODELS: ModelItem[] = [
     {
         name: "text-embedding-v4",
         provider: "Qwen",
-        providerIcon: "🔮",
         type: "embedding",
         typeLabel: "索引模型",
         usedTokens: 562100,
@@ -60,7 +57,6 @@ export const MOCK_MODELS: ModelItem[] = [
     {
         name: "doubao-seed-1-6-thinking-250615",
         provider: "Doubao",
-        providerIcon: "🌊",
         type: "llm",
         typeLabel: "语言模型",
         usedTokens: 89200,
@@ -69,7 +65,6 @@ export const MOCK_MODELS: ModelItem[] = [
     {
         name: "deepseek-chat",
         provider: "DeepSeek",
-        providerIcon: "🐋",
         type: "llm",
         typeLabel: "语言模型",
         usedTokens: 210800,
@@ -78,7 +73,6 @@ export const MOCK_MODELS: ModelItem[] = [
     {
         name: "deepseek-reasoner",
         provider: "DeepSeek",
-        providerIcon: "🐋",
         type: "llm",
         typeLabel: "语言模型",
         usedTokens: 175400,
@@ -87,7 +81,6 @@ export const MOCK_MODELS: ModelItem[] = [
     {
         name: "glm-4-air",
         provider: "ChatGLM",
-        providerIcon: "🧊",
         type: "llm",
         typeLabel: "语言模型",
         usedTokens: 33500,
@@ -96,7 +89,6 @@ export const MOCK_MODELS: ModelItem[] = [
     {
         name: "hunyuan-standard",
         provider: "Hunyuan",
-        providerIcon: "💎",
         type: "llm",
         typeLabel: "语言模型",
         usedTokens: 12750,
@@ -110,7 +102,6 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         name: "gpt-5.2",
         modelName: "gpt-5.2",
         provider: "OpenAI",
-        providerIcon: "🤖",
         type: "llm",
         typeLabel: "语言模型",
         tagColor: "blue",
@@ -123,7 +114,6 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         name: "text-embedding-v3",
         modelName: "text-embedding-v3",
         provider: "OpenAI",
-        providerIcon: "🔮",
         type: "embedding",
         typeLabel: "索引模型",
         tagColor: "yellow",
@@ -136,7 +126,6 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         name: "tts-1-hd",
         modelName: "tts-1-hd",
         provider: "OpenAI",
-        providerIcon: "🔊",
         type: "tts",
         typeLabel: "语音合成",
         tagColor: "green",
@@ -149,7 +138,6 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         name: "Whisper1",
         modelName: "whisper-1",
         provider: "OpenAI",
-        providerIcon: "👂",
         type: "stt",
         typeLabel: "语音识别",
         tagColor: "purple",
@@ -162,7 +150,6 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         name: "bge-reranker-v2-m3",
         modelName: "bge-reranker-v2-m3",
         provider: "OpenAI",
-        providerIcon: "🔄",
         type: "rerank",
         typeLabel: "重排模型",
         tagColor: "red",
@@ -175,7 +162,6 @@ export const MOCK_CONFIG_MODELS: ConfigModelItem[] = [
         name: "gpt-4.1",
         modelName: "gpt-4.1",
         provider: "OpenAI",
-        providerIcon: "🤖",
         type: "llm",
         typeLabel: "语言模型",
         tagColor: "blue",

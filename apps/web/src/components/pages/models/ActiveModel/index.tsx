@@ -25,7 +25,6 @@ function ModelNameCell({ model }: { model: ModelItem }) {
 
     return (
         <div className="flex items-center gap-2.5">
-            <span className="text-base leading-none">{model.providerIcon}</span>
             <button
                 onClick={handleCopy}
                 className="group flex items-center gap-1.5 text-sm font-medium text-slate-800 hover:text-blue-600 transition-colors cursor-pointer"
@@ -92,7 +91,6 @@ export default function ActiveModelTab() {
                 .map((m: any) => ({
                     name: m.name,
                     provider: m.provider,
-                    providerIcon: m.provider === 'openai' ? '🤖' : '🔌', // Simple mapping
                     type: "llm", // Defaulting to LLM for now as backend doesn't store type yet
                     typeLabel: "对话模型",
                     tagColor: "blue",
