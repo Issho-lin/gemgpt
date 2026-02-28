@@ -17,19 +17,23 @@ export interface TestModelItem {
     status: "waiting" | "success" | "failed"
 }
 
-const MOCK_TEST_MODELS: TestModelItem[] = [
-    { name: "hunyuan-standard", id: "hunyuan-standard", status: "waiting" },
-    { name: "qwen3-8b", id: "qwen3-8b", status: "waiting" },
-    { name: "glm-4-air", id: "glm-4-air", status: "waiting" },
-]
-
 export default function TestModelModal({
     open,
     onOpenChange,
+    testData,
 }: {
     open: boolean
     onOpenChange: (open: boolean) => void
+    testData?: any
 }) {
+    const models = useMemo(() => {
+        if (!testData?.models) return []
+        return [...testData.models].map(m => ({
+            name: m,
+            id: m,
+            status: "waiting"
+        })) as TestModelItem[]
+    }, [testData])
 
     const columns: ColumnDef<TestModelItem>[] = useMemo(() => [
         {
@@ -82,7 +86,7 @@ export default function TestModelModal({
                     <div className="bg-slate-50 rounded-lg border border-slate-100 overflow-hidden">
                         <DataTable
                             columns={columns}
-                            dataSource={MOCK_TEST_MODELS}
+                            dataSource={models}
                             rowKey="id"
                             className="bg-transparent"
                             rowClassName="hover:bg-white transition-colors"
@@ -95,7 +99,7 @@ export default function TestModelModal({
                         取消
                     </Button>
                     <Button className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white">
-                        批量测试3个模型
+                        批量测试{models.length}个模型
                     </Button>
                 </DialogFooter>
             </DialogContent>

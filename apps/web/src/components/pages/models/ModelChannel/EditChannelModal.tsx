@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Settings, HelpCircle } from "lucide-react"
 import {
     Dialog,
@@ -9,61 +9,122 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { JSONEditor } from "@/components/common/JSONEditor"
-import { SelectDropdown } from "@/components/common/SelectDropdown"
-import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card"
-import { MODEL_TYPE_OPTIONS } from "../constants"
-import EditModelModal from "../ModelConfig/EditModelModal"
-import EditVectorModelModal from "../ModelConfig/EditVectorModelModal"
-import EditAudioModelModal from "../ModelConfig/EditAudioModelModal"
-import EditSTTModelModal from "../ModelConfig/EditSTTModelModal"
-import EditReRankModelModal from "../ModelConfig/EditReRankModelModal"
+import { postCreateChannel, putChannel } from "@/api/aiproxy"
+import { toast } from "sonner"
 
 export default function EditChannelModal({
     open,
     onOpenChange,
     isEdit,
+    editData,
+    channelProviders,
+    onSuccess,
 }: {
     open: boolean
     onOpenChange: (open: boolean) => void
     isEdit?: boolean
+    editData?: any
+    channelProviders?: Record<string, any>
+    onSuccess?: () => void
 }) {
     const [formData, setFormData] = useState({
         name: "",
-        protocol: "OpenAI",
+        protocol: "1", // Default to OpenAI if available
         models: [] as string[],
-        modelMapping: "{}",
+        modelMapping: "{}\n",
         proxyUrl: "",
         apiKey: "",
+        priority: 1,
+        status: 1
     })
+
+    const [loading, setLoading] = useState(false)
+
+    // Sync formData with editData when opened
+    useEffect(() => {
+        if (open) {
+            if (isEdit && editData) {
+                setFormData({
+                    name: editData.name || "",
+                    protocol: String(editData.type || "1"),
+                    models: editData.models || [],
+                    modelMapping: editData.model_mapping ? JSON.stringify(editData.model_mapping, null, 2) : "{}\n",
+                    proxyUrl: editData.base_url || "",
+                    apiKey: editData.key || "",
+                    priority: editData.priority || 1,
+                    status: editData.status || 1
+                })
+            } else {
+                setFormData({
+                    name: "",
+                    protocol: "1",
+                    models: [],
+                    modelMapping: "{}\n",
+                    proxyUrl: "",
+                    apiKey: "",
+                    priority: 1,
+                    status: 1
+                })
+            }
+        }
+    }, [open, isEdit, editData])
 
     const updateField = (key: string, value: any) => {
         setFormData(prev => ({ ...prev, [key]: value }))
     }
 
-    const [showEditModal, setShowEditModal] = useState(false)
-    const [showVectorEditModal, setShowVectorEditModal] = useState(false)
-    const [showAudioEditModal, setShowAudioEditModal] = useState(false)
-    const [showSTTEditModal, setShowSTTEditModal] = useState(false)
-    const [showReRankEditModal, setShowReRankEditModal] = useState(false)
-    const [isModelEdit, setIsModelEdit] = useState(false)
+    const handleSubmit = async () => {
+        if (!formData.name) {
+            toast.error("渠道名称不能为空")
+            return
+        }
 
-    const PROTOCOL_OPTIONS = [
-        { label: "OpenAI", value: "OpenAI", icon: "🤖" },
-        { label: "Azure OpenAI", value: "Azure", icon: "☁️" },
-        { label: "Anthropic", value: "Anthropic", icon: "🧠" },
-        { label: "Google Gemini", value: "Gemini", icon: "✨" },
-    ]
+        setLoading(true)
+        try {
+            let mappingObj = null
+            try {
+                if (formData.modelMapping && formData.modelMapping.trim() !== "") {
+                    mappingObj = JSON.parse(formData.modelMapping)
+                }
+            } catch (e) {
+                toast.error("模型映射必须是合法的 JSON")
+                setLoading(false)
+                return
+            }
+
+            const reqData = {
+                type: Number(formData.protocol),
+                name: formData.name,
+                base_url: formData.proxyUrl,
+                models: formData.models,
+                model_mapping: mappingObj,
+                key: formData.apiKey,
+                priority: formData.priority,
+                status: formData.status
+            }
+
+            if (isEdit && editData?.id) {
+                await putChannel({ ...reqData, id: editData.id })
+                toast.success("渠道更新成功")
+            } else {
+                await postCreateChannel(reqData)
+                toast.success("渠道创建成功")
+            }
+            onSuccess?.()
+            onOpenChange(false)
+        } catch (error: any) {
+            toast.error(error?.message || "操作失败")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const PROTOCOL_OPTIONS = Object.entries(channelProviders || {}).map(([key, value]) => ({
+        label: value.name,
+        value: key
+    }))
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -101,72 +162,38 @@ export default function EditChannelModal({
                             <span className="text-red-500 mr-1">*</span>
                             协议类型
                         </label>
-                        <SelectDropdown
+                        <select
+                            className="w-full h-9 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
                             value={formData.protocol}
-                            onChange={v => updateField("protocol", v)}
-                            options={PROTOCOL_OPTIONS.map(p => ({
-                                label: `${p.icon} ${p.label}`,
-                                value: p.value
-                            }))}
-                            width="w-full"
-                        />
+                            onChange={e => updateField("protocol", e.target.value)}
+                        >
+                            {PROTOCOL_OPTIONS.map(p => (
+                                <option key={p.value} value={p.value}>{p.label}</option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* Models */}
                     <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-slate-700">
-                                <span className="text-red-500 mr-1">*</span>
-                                模型({formData.models.length})
-                            </label>
-                            <div className="flex gap-2">
-                                <HoverCard openDelay={0} closeDelay={100}>
-                                    <HoverCardTrigger asChild>
-                                        <Button variant="outline" size="sm" className="h-7 text-xs px-2 bg-white hover:bg-slate-50 border-slate-200 text-slate-600">
-                                            新增模型
-                                        </Button>
-                                    </HoverCardTrigger>
-                                    <HoverCardContent align="end" className="w-[140px] p-1">
-                                        <div className="flex flex-col">
-                                            {MODEL_TYPE_OPTIONS.filter((opt) => opt.value !== "").map((opt) => (
-                                                <button
-                                                    key={opt.value}
-                                                    onClick={() => {
-                                                        setIsModelEdit(false)
-                                                        if (opt.value === "llm") {
-                                                            setShowEditModal(true)
-                                                        } else if (opt.value === "embedding") {
-                                                            setShowVectorEditModal(true)
-                                                        } else if (opt.value === "tts") {
-                                                            setShowAudioEditModal(true)
-                                                        } else if (opt.value === "stt") {
-                                                            setShowSTTEditModal(true)
-                                                        } else if (opt.value === "rerank") {
-                                                            setShowReRankEditModal(true)
-                                                        }
-                                                    }}
-                                                    className="flex w-full items-center rounded-sm px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer text-left"
-                                                >
-                                                    {opt.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </HoverCardContent>
-                                </HoverCard>
-                                <Button variant="outline" size="sm" className="h-7 text-xs px-2 bg-white hover:bg-slate-50 border-slate-200 text-slate-600">
-                                    清空模型
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="w-full">
-                            <SelectDropdown
-                                value=""
-                                onChange={() => { }}
-                                options={[]}
-                                placeholder="选择该渠道下可用的模型"
-                                width="w-full"
-                            />
-                        </div>
+                        <label className="flex items-center gap-1 text-sm font-medium text-slate-700">
+                            模型列表
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <HelpCircle size={14} className="text-slate-400" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>英文逗号分隔，如: gpt-3.5-turbo,gpt-4</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </label>
+                        <Input
+                            className="bg-slate-50 h-9"
+                            placeholder="gpt-3.5-turbo,gpt-4"
+                            value={formData.models.join(',')}
+                            onChange={e => updateField("models", e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                        />
                     </div>
 
                     {/* Model Mapping */}
@@ -224,40 +251,14 @@ export default function EditChannelModal({
                 </div>
 
                 <DialogFooter className="px-5 py-3 border-t bg-white">
-                    <Button variant="outline" onClick={() => onOpenChange(false)} className="h-8 px-4 text-sm">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="h-8 px-4 text-sm" disabled={loading}>
                         取消
                     </Button>
-                    <Button onClick={() => onOpenChange(false)} className="h-8 px-4 text-sm bg-blue-600 hover:bg-blue-700 text-white">
-                        {isEdit ? "保存" : "新建"}
+                    <Button onClick={handleSubmit} className="h-8 px-4 text-sm bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
+                        {loading ? "提交中..." : isEdit ? "保存" : "新建"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
-
-            <EditModelModal
-                open={showEditModal}
-                onOpenChange={setShowEditModal}
-                isEdit={isModelEdit}
-            />
-            <EditVectorModelModal
-                open={showVectorEditModal}
-                onOpenChange={setShowVectorEditModal}
-                isEdit={isModelEdit}
-            />
-            <EditAudioModelModal
-                open={showAudioEditModal}
-                onOpenChange={setShowAudioEditModal}
-                isEdit={isModelEdit}
-            />
-            <EditSTTModelModal
-                open={showSTTEditModal}
-                onOpenChange={setShowSTTEditModal}
-                isEdit={isModelEdit}
-            />
-            <EditReRankModelModal
-                open={showReRankEditModal}
-                onOpenChange={setShowReRankEditModal}
-                isEdit={isModelEdit}
-            />
         </Dialog>
     )
 }
