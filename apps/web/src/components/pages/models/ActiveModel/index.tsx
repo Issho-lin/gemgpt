@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect } from "react"
 import { Search, Copy, Check, Loader2 } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { DataTable, type ColumnDef } from "@/components/common/DataTable"
 import { SelectDropdown } from "@/components/common/SelectDropdown"
 import {
-    PROVIDER_OPTIONS,
     MODEL_TYPE_OPTIONS,
     TAG_COLORS,
     type ModelType,
@@ -25,6 +25,10 @@ function ModelNameCell({ model }: { model: ModelItem }) {
 
     return (
         <div className="flex items-center gap-2.5">
+            <Avatar className="h-6 w-6">
+                <AvatarImage src={model.avatar} />
+                <AvatarFallback>{model.provider?.charAt(0) || "M"}</AvatarFallback>
+            </Avatar>
             <button
                 onClick={handleCopy}
                 className="group flex items-center gap-1.5 text-sm font-medium text-slate-800 hover:text-blue-600 transition-colors cursor-pointer"
@@ -78,26 +82,76 @@ export default function ActiveModelTab() {
     const [models, setModels] = useState<ModelItem[]>([])
     const [loading, setLoading] = useState(true)
 
+    const [providerOptions, setProviderOptions] = useState<{ label: React.ReactNode; value: string }[]>([{ label: "全部", value: "" }])
+
     useEffect(() => {
         fetchModels()
+        fetchProviders()
     }, [])
+
+    const fetchProviders = async () => {
+        try {
+            const res = await api.get("/core/ai/model/providers")
+            const options = res.data.map((p: any) => ({
+                value: p.provider,
+                label: (
+                    <div className="flex items-center gap-2">
+                        <Avatar className="h-4 w-4">
+                            <AvatarImage src={p.avatar} />
+                            <AvatarFallback className="text-[10px]">
+                                {p.name?.charAt(0) || p.provider?.charAt(0)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <span>{p.provider}</span>
+                    </div>
+                )
+            }))
+            setProviderOptions([{ label: "全部", value: "" }, ...options])
+        } catch (error) {
+            console.error("获取模型提供商失败", error)
+        }
+    }
 
     const fetchModels = async () => {
         try {
-            const res = await api.get("/models")
+            const res = await api.get("/core/ai/model/list")
+
+            const TYPE_MAP: Record<string, { type: string; typeLabel: string; tagColor: string }> = {
+                llm: { type: "llm", typeLabel: "语言模型", tagColor: "blue" },
+                embedding: { type: "embedding", typeLabel: "索引模型", tagColor: "yellow" },
+                tts: { type: "tts", typeLabel: "语音合成", tagColor: "green" },
+                stt: { type: "stt", typeLabel: "语音识别", tagColor: "purple" },
+                rerank: { type: "rerank", typeLabel: "重排模型", tagColor: "red" },
+            }
+
             // Filter only active models and map to UI structure
             const activeModels = res.data
                 .filter((m: any) => m.isActive)
-                .map((m: any) => ({
-                    name: m.name,
-                    provider: m.provider,
-                    type: "llm", // Defaulting to LLM for now as backend doesn't store type yet
-                    typeLabel: "对话模型",
-                    tagColor: "blue",
-                    usedTokens: 0, // Backend needs to provide this
-                    contextLength: "4k", // Placeholder
-                    capabilities: ["对话"]
-                }))
+                .map((m: any) => {
+                    const typeInfo = TYPE_MAP[m.type] ?? { type: m.type, typeLabel: m.type, tagColor: "blue" }
+                    return {
+                        name: m.name,
+                        provider: m.provider,
+                        avatar: m.avatar,
+                        type: typeInfo.type as ModelType,
+                        typeLabel: typeInfo.typeLabel,
+                        tagColor: typeInfo.tagColor,
+                        usedTokens: 0, // Backend needs to provide this
+                        order: m.order ?? 9999
+                    }
+                })
+
+            const TYPE_ORDER = ["llm", "embedding", "tts", "stt", "rerank"]
+            activeModels.sort((a: any, b: any) => {
+                const orderA = a.order
+                const orderB = b.order
+                if (orderA !== orderB) return orderA - orderB
+                const typeA = TYPE_ORDER.indexOf(a.type)
+                const typeB = TYPE_ORDER.indexOf(b.type)
+                if (typeA !== typeB) return typeA - typeB
+                return 0
+            })
+
             setModels(activeModels)
         } catch (error) {
             toast.error("获取模型列表失败")
@@ -130,7 +184,7 @@ export default function ActiveModelTab() {
                     <SelectDropdown
                         value={provider}
                         onChange={setProvider}
-                        options={PROVIDER_OPTIONS}
+                        options={providerOptions}
                         width="w-[180px]"
                     />
                 </div>
@@ -150,7 +204,7 @@ export default function ActiveModelTab() {
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="搜索模型名称..."
+                        placeholder="根据模型名称搜索"
                         className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
                     />
                 </div>

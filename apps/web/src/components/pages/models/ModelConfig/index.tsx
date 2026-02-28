@@ -95,8 +95,7 @@ export default function ModelConfigTab() {
             const mappedModels = res.data.map((m: any) => {
                 const typeInfo = TYPE_MAP[m.type] ?? { type: m.type, typeLabel: m.type, tagColor: "blue" }
                 return {
-                    id: m.id,
-                    name: m.name,
+                    name: m.name || m.model,
                     modelName: m.model, // 真实模型标识符，如 "gpt-4o"
                     provider: m.provider,
                     avatar: m.avatar,
@@ -137,11 +136,11 @@ export default function ModelConfigTab() {
 
     const activeCount = useMemo(() => models.filter((m) => m.isActive).length, [models])
 
-    const toggleActive = async (id: string, currentStatus: boolean) => {
+    const toggleActive = async (modelName: string, currentStatus: boolean) => {
         try {
-            await api.patch("/core/ai/model/toggle", { model: id, isActive: !currentStatus })
+            await api.patch("/core/ai/model/toggle", { model: modelName, isActive: !currentStatus })
             setModels((prev) =>
-                prev.map((m) => (m.id === id ? { ...m, isActive: !currentStatus } : m))
+                prev.map((m) => (m.modelName === modelName ? { ...m, isActive: !currentStatus } : m))
             )
             toast.success(currentStatus ? "模型已禁用" : "模型已启用")
         } catch (error) {
@@ -149,11 +148,11 @@ export default function ModelConfigTab() {
         }
     }
 
-    const deleteModel = async (id: string) => {
+    const deleteModel = async (modelName: string) => {
         if (!window.confirm("确定要删除该自定义模型吗？")) return
         try {
-            await api.delete("/core/ai/model/delete", { params: { id } })
-            setModels((prev) => prev.filter((m) => m.id !== id))
+            await api.delete("/core/ai/model/delete", { params: { id: modelName } })
+            setModels((prev) => prev.filter((m) => m.modelName !== modelName))
             toast.success("模型已删除")
             // 如果需要重新拉取数据以保证准确性，可以调用 fetchConfigs()
         } catch (error) {
@@ -217,7 +216,7 @@ export default function ModelConfigTab() {
             key: "active",
             render: (_, model) => (
                 <button
-                    onClick={() => toggleActive(model.id, model.isActive)}
+                    onClick={() => toggleActive(model.modelName, model.isActive)}
                     className={cn(
                         "relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer",
                         model.isActive ? "bg-blue-500" : "bg-slate-200"
@@ -285,7 +284,7 @@ export default function ModelConfigTab() {
                                 <TooltipTrigger asChild>
                                     <button
                                         className="p-1.5 rounded-md text-red-400 hover:text-red-500 hover:bg-red-50 transition-all cursor-pointer"
-                                        onClick={() => deleteModel(model.id)}
+                                        onClick={() => deleteModel(model.modelName)}
                                     >
                                         <Trash2 size={14} />
                                     </button>
@@ -409,7 +408,7 @@ export default function ModelConfigTab() {
             <DataTable
                 columns={columns}
                 dataSource={filteredModels}
-                rowKey="id"
+                rowKey="modelName"
                 emptyText="暂无匹配的模型"
                 className="w-full"
             />
