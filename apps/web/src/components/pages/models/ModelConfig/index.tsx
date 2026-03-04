@@ -30,7 +30,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import api from "@/lib/api"
+import { getModelProviders, getModelList, toggleModelActive, deleteCustomModel } from "@/api/model"
 import { toast } from "sonner"
 
 export default function ModelConfigTab() {
@@ -56,8 +56,8 @@ export default function ModelConfigTab() {
 
     const fetchProviders = async () => {
         try {
-            const res = await api.get("/core/ai/model/providers")
-            const options = res.data.map((p: any) => ({
+            const data = await getModelProviders()
+            const options = data.map((p: any) => ({
                 value: p.provider,
                 label: (
                     <div className="flex items-center gap-2">
@@ -79,7 +79,7 @@ export default function ModelConfigTab() {
 
     const fetchConfigs = async () => {
         try {
-            const res = await api.get("/core/ai/model/list")
+            const data = await getModelList()
 
             // AppModel 字段: { id, type, provider, model, name, charsPointsPrice, config }
             // 后端 type: "llm" | "vector" | "tts" | "stt" | "rerank"
@@ -92,7 +92,7 @@ export default function ModelConfigTab() {
                 rerank: { type: "rerank", typeLabel: "重排模型", tagColor: "red" },
             }
 
-            const mappedModels = res.data.map((m: any) => {
+            const mappedModels = data.map((m: any) => {
                 const typeInfo = TYPE_MAP[m.type] ?? { type: m.type, typeLabel: m.type, tagColor: "blue" }
                 return {
                     name: m.name || m.model,
@@ -138,7 +138,7 @@ export default function ModelConfigTab() {
 
     const toggleActive = async (modelName: string, currentStatus: boolean) => {
         try {
-            await api.patch("/core/ai/model/toggle", { model: modelName, isActive: !currentStatus })
+            await toggleModelActive(modelName, !currentStatus)
             setModels((prev) =>
                 prev.map((m) => (m.modelName === modelName ? { ...m, isActive: !currentStatus } : m))
             )
@@ -151,7 +151,7 @@ export default function ModelConfigTab() {
     const deleteModel = async (modelName: string) => {
         if (!window.confirm("确定要删除该自定义模型吗？")) return
         try {
-            await api.delete("/core/ai/model/delete", { params: { id: modelName } })
+            await deleteCustomModel(modelName)
             setModels((prev) => prev.filter((m) => m.modelName !== modelName))
             toast.success("模型已删除")
             // 如果需要重新拉取数据以保证准确性，可以调用 fetchConfigs()

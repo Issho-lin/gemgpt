@@ -51,6 +51,26 @@ export class AppModelsService {
   }
 
   /**
+   * 获取 aiproxyIdMap 映射表。
+   */
+  async getAiproxyIdMap(): Promise<Record<string, any>> {
+    if (!this.pluginBaseUrl) return {};
+    try {
+      const url = `${this.pluginBaseUrl.replace(/\/$/, '')}/model/getProviders`;
+      const res = await axios.get(url, {
+        headers: this.pluginHeaders,
+        timeout: 5000,
+      });
+      if (res.status === 200 && res.data?.aiproxyIdMap) {
+        return res.data.aiproxyIdMap;
+      }
+    } catch (error: any) {
+      this.logger.warn(`获取 aiproxyIdMap 失败: ${error.message}`);
+    }
+    return {};
+  }
+
+  /**
    * 从 FastGPT Plugin 服务拉取模型列表。
    * 如果 Plugin 不可用，返回 null（由调用方决定降级策略）。
    */

@@ -1,5 +1,8 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import axios from 'axios';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Injectable()
 export class AiproxyService {

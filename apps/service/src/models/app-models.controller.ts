@@ -17,6 +17,11 @@ export class AppModelsController {
     return this.appModelsService.getProviders();
   }
 
+  @Get('aiproxyMap')
+  getAiproxyIdMap() {
+    return this.appModelsService.getAiproxyIdMap();
+  }
+
   @Post('create')
   @UseGuards(AuthGuard('jwt'))
   create(@Body() data: Prisma.AppModelCreateInput) {

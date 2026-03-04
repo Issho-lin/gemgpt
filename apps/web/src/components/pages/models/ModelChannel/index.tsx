@@ -18,12 +18,16 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { getChannelList, getChannelProviders, putChannelStatus, deleteChannel, putChannel } from "@/api/aiproxy"
+import { getChannelList, getChannelProviders, getAiproxyMap, putChannelStatus, deleteChannel, putChannel } from "@/api/aiproxy"
 import { toast } from "sonner"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getModelProviders } from "@/api/model"
 
 export default function ModelChannelTab() {
     const [channels, setChannels] = useState<any[]>([])
     const [channelProviders, setChannelProviders] = useState<Record<string, any>>({})
+    const [aiproxyIdMap, setAiproxyIdMap] = useState<Record<string, any>>({})
+    const [modelProviders, setModelProviders] = useState<any[]>([])
     const [showEditModal, setShowEditModal] = useState(false)
     const [isEdit, setIsEdit] = useState(false)
     const [editItem, setEditItem] = useState<any>(null)
@@ -33,12 +37,16 @@ export default function ModelChannelTab() {
     const fetchChannels = async () => {
         try {
             setLoading(true)
-            const [list, providersMap] = await Promise.all([
+            const [list, providersMap, aiproxyMap, providerData] = await Promise.all([
                 getChannelList(),
-                getChannelProviders()
+                getChannelProviders(),
+                getAiproxyMap(),
+                getModelProviders()
             ])
             setChannels(list)
             setChannelProviders(providersMap)
+            setAiproxyIdMap(aiproxyMap)
+            setModelProviders(providerData)
         } catch (error) {
             toast.error("获取渠道列表失败")
         } finally {
@@ -99,11 +107,31 @@ export default function ModelChannelTab() {
         {
             title: "协议类型",
             key: "protocol",
-            render: (_, item) => (
-                <div className="flex items-center gap-2">
-                    <span className="text-slate-700">{channelProviders[item.type]?.name || "未知协议"}</span>
-                </div>
-            )
+            render: (_, item) => {
+                const providerData = aiproxyIdMap[item.type] || {
+                    name: channelProviders[item.type]?.name || "未知协议",
+                    provider: 'Other'
+                }
+                const nameDisplay = typeof providerData.name === 'object'
+                    ? (providerData.name['zh-CN'] || providerData.name['en'] || providerData.provider)
+                    : providerData.name
+
+                const providerInfo = modelProviders.find(p => p.provider === providerData.provider) || {}
+
+                return (
+                    <div className="flex items-center gap-2">
+                        {providerInfo.avatar && (
+                            <Avatar className="h-5 w-5">
+                                <AvatarImage src={providerInfo.avatar} />
+                                <AvatarFallback className="text-[10px] bg-slate-100 text-slate-500">
+                                    {nameDisplay?.charAt(0) || "M"}
+                                </AvatarFallback>
+                            </Avatar>
+                        )}
+                        <span className="text-slate-700">{nameDisplay}</span>
+                    </div>
+                )
+            }
         },
         {
             title: "状态",
@@ -198,7 +226,7 @@ export default function ModelChannelTab() {
                 </HoverCard>
             )
         }
-    ], [channelProviders])
+    ], [channelProviders, aiproxyIdMap, modelProviders])
 
     if (loading) {
         return <div className="flex justify-center py-20"><Loader2 className="animate-spin h-8 w-8 text-muted-foreground" /></div>
