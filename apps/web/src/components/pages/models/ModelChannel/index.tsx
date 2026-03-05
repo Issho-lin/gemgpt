@@ -118,11 +118,19 @@ export default function ModelChannelTab() {
 
                 const providerInfo = modelProviders.find(p => p.provider === providerData.provider) || {}
 
+                const rawAvatar = providerData.avatar || providerInfo.avatar;
+                const getAvatarUrl = (avatarStr: string) => {
+                    if (!avatarStr) return '';
+                    if (avatarStr.startsWith('http') || avatarStr.startsWith('/')) return avatarStr;
+                    return `/${avatarStr}.svg`;
+                };
+                const finalAvatar = getAvatarUrl(rawAvatar);
+
                 return (
                     <div className="flex items-center gap-2">
-                        {providerInfo.avatar && (
-                            <Avatar className="h-5 w-5">
-                                <AvatarImage src={providerInfo.avatar} />
+                        {finalAvatar && (
+                            <Avatar className="h-5 w-5 rounded-none">
+                                <AvatarImage src={finalAvatar} />
                                 <AvatarFallback className="text-[10px] bg-slate-100 text-slate-500">
                                     {nameDisplay?.charAt(0) || "M"}
                                 </AvatarFallback>
@@ -260,7 +268,6 @@ export default function ModelChannelTab() {
                 onOpenChange={setShowEditModal}
                 isEdit={isEdit}
                 editData={editItem}
-                channelProviders={channelProviders}
                 onSuccess={fetchChannels}
             />
             <TestModelModal

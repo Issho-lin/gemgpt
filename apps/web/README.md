@@ -71,3 +71,5 @@ export default defineConfig([
   },
 ])
 ```
+
+<!-- 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 -->

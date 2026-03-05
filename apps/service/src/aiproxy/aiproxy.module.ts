@@ -5,5 +5,6 @@ import { AiproxyService } from './aiproxy.service';
 @Module({
     controllers: [AiproxyController],
     providers: [AiproxyService],
+    exports: [AiproxyService],
 })
 export class AiproxyModule { }

@@ -19,7 +19,7 @@ export class AiproxyController {
 
     @Post('createChannel')
     createChannel(@Body() body: any) {
-        return this.aiproxyService.proxyRequest('POST', '/createChannel', undefined, body);
+        return this.aiproxyService.proxyRequest('POST', '/channel/', undefined, body);
     }
 
     @Post('channel/:id/status')

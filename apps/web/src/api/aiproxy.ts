@@ -61,3 +61,8 @@ export const deleteChannel = async (id: number) => {
     const res = await api.delete(`/core/aiproxy/channel/${id}`);
     return res.data?.data || res.data;
 };
+
+export const getTestModel = async (channelId: number, model?: string) => {
+    const res = await api.get('/core/ai/model/test', { params: { model, channelId } });
+    return res.data?.data || res.data;
+};
