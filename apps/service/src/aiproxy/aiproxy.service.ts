@@ -44,31 +44,63 @@ export class AiproxyService {
      * Test a specific model through a specific channel.
      * References the 'Aiproxy-Channel' header to route the request to the target channel.
      */
-    async testModel(channelId: number, model: string) {
+    async testModel(channelId: number, model: string, modelType?: string) {
         if (!this.baseUrl || !this.token) {
             throw new HttpException('AIPROXY service config is missing', HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         // AIPROXY_API_ENDPOINT is the management API (e.g. http://host:3010/api)
-        // The OpenAI-compatible endpoint is at the root (e.g. http://host:3010/v1/chat/completions)
+        // The OpenAI-compatible endpoint is at the root (e.g. http://host:3010/v1/...)
         const openaiBase = this.baseUrl.replace(/\/api\/?$/, '');
-        const url = `${openaiBase}/v1/chat/completions`;
+
+        const headers = {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+            'Aiproxy-Channel': String(channelId),
+        };
 
         try {
             const start = Date.now();
+
+            if (modelType === 'embedding') {
+                // Embedding 模型使用 /v1/embeddings
+                const url = `${openaiBase}/v1/embeddings`;
+                const response = await axios.post(url, {
+                    model,
+                    input: 'hi',
+                }, { headers, timeout: 30000 });
+
+                const embedding = response.data?.data?.[0]?.embedding;
+                if (!Array.isArray(embedding) || embedding.length === 0) {
+                    throw new HttpException('Embedding response is empty', HttpStatus.BAD_GATEWAY);
+                }
+                return { success: true, duration: Date.now() - start, dimensions: embedding.length };
+            }
+
+            if (modelType === 'rerank') {
+                // Rerank 模型使用 /v1/rerank
+                const url = `${openaiBase}/v1/rerank`;
+                const response = await axios.post(url, {
+                    model,
+                    query: 'hi',
+                    documents: ['hello world'],
+                }, { headers, timeout: 30000 });
+
+                const results = response.data?.results;
+                if (!Array.isArray(results)) {
+                    throw new HttpException('Rerank response is empty', HttpStatus.BAD_GATEWAY);
+                }
+                return { success: true, duration: Date.now() - start };
+            }
+
+            // 默认：LLM / tts / stt 等，统一使用 /v1/chat/completions
+            const url = `${openaiBase}/v1/chat/completions`;
             const response = await axios.post(url, {
                 model,
                 messages: [{ role: 'user', content: 'hi' }],
                 max_tokens: 10,
                 stream: false,
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${this.token}`,
-                    'Content-Type': 'application/json',
-                    'Aiproxy-Channel': String(channelId),
-                },
-                timeout: 30000,
-            });
+            }, { headers, timeout: 30000 });
 
             const duration = Date.now() - start;
             const content = response.data?.choices?.[0]?.message?.content;
@@ -77,7 +109,7 @@ export class AiproxyService {
             }
             return { success: true, duration, content };
         } catch (error: any) {
-            this.logger.error(`testModel failed [channel=${channelId}, model=${model}]: ${error.message}`);
+            this.logger.error(`testModel failed [channel=${channelId}, model=${model}, type=${modelType}]: ${error.message}`);
             if (error.response) {
                 const errMsg = error.response.data?.error?.message
                     || error.response.data?.message

@@ -32,11 +32,23 @@ export class AppModelsController {
    */
   @Get('test')
   @UseGuards(AuthGuard('jwt'))
-  testModel(
+  async testModel(
     @Query('model') model: string,
     @Query('channelId', ParseIntPipe) channelId: number,
+    @Query('modelType') modelType?: string,
   ) {
-    return this.aiproxyService.testModel(channelId, model);
+    // 若前端未传 modelType，则从模型列表自动推断
+    let resolvedType = modelType;
+    if (!resolvedType) {
+      try {
+        const allModels = await this.appModelsService.findAll();
+        const found = allModels.find((m: any) => m.model === model);
+        resolvedType = found?.type;
+      } catch {
+        // 推断失败则按默认 llm 处理
+      }
+    }
+    return this.aiproxyService.testModel(channelId, model, resolvedType);
   }
 
   @Post('create')
