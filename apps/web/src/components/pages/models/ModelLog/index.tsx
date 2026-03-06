@@ -1,22 +1,18 @@
-import { useState, useMemo, useEffect } from "react"
-import { Search, ListFilter, HelpCircle, Loader2 } from "lucide-react"
+import { useState, useMemo, useEffect, useRef } from "react"
+import { ListFilter, HelpCircle, Loader2 } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { subDays } from "date-fns"
 import { DateRangePicker } from "@/components/common/DateRangePicker"
 import { cn } from "@/lib/utils"
 import { DataTable, type ColumnDef } from "@/components/common/DataTable"
 import { SelectDropdown } from "@/components/common/SelectDropdown"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import ModelLogDetailModal from "./ModelLogDetailModal"
-import api from "@/lib/api"
 import { toast } from "sonner"
+import { getChannelLog, getChannelList } from "@/api/aiproxy"
+import { getModelProviders, getModelList } from "@/api/model"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export interface LogItem {
     id: string
@@ -32,25 +28,27 @@ export interface LogItem {
     ttft?: string
 }
 
-const CHANNEL_OPTIONS = [
-    { label: "AIProxy", value: "aiproxy" },
-    { label: "OpenAI", value: "openai" },
-]
-
-const STATUS_OPTIONS = [
+const STATUS_OPTIONS: { label: string, value: 'success' | 'error' }[] = [
     { label: "成功", value: "success" },
-    { label: "失败", value: "failed" },
+    { label: "失败", value: "error" },
 ]
 
 export default function ModelLogTab() {
-    const [search, setSearch] = useState("")
     const [channel, setChannel] = useState("")
     const [model, setModel] = useState("")
-    const [status, setStatus] = useState("")
+    const [status, setStatus] = useState<'' | 'success' | 'error'>("")
     // Date range state
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
-        from: subDays(new Date(), 7),
-        to: new Date()
+        from: (() => {
+            const today = subDays(new Date(), 1);
+            today.setHours(0, 0, 0, 0);
+            return today;
+        })(),
+        to: (() => {
+            const today = new Date();
+            today.setHours(23, 59, 59, 999);
+            return today;
+        })()
     })
     const [selectedLog, setSelectedLog] = useState<LogItem | undefined>(undefined)
     const [showDetailModal, setShowDetailModal] = useState(false)
@@ -58,30 +56,111 @@ export default function ModelLogTab() {
     const [loading, setLoading] = useState(true)
     const [page, setPage] = useState(1)
     const [total, setTotal] = useState(0)
+    const [channelList, setChannelList] = useState<any[]>([])
+    const [allModels, setAllModels] = useState<{ provider: string, model: string }[]>([])
+    const [providerList, setProviderList] = useState<any[]>([])
+    const pageSize = 10
+
+    const channelOptions = useMemo(() => {
+        return channelList.map(c => ({ label: c.name, value: `${c.id}` }))
+    }, [channelList])
+
+    const modelOptions = useMemo(() => {
+        return allModels
+            .map((item) => {
+                const provider = providerList.find((p: any) => p.provider === item.provider) || {}
+                const rawAvatar = provider.avatar
+                const finalAvatar = rawAvatar ? (rawAvatar.startsWith('http') || rawAvatar.startsWith('/') ? rawAvatar : `/${rawAvatar}.svg`) : ''
+
+                return {
+                    provider: item.provider,
+                    label: (
+                        <div className="flex items-center gap-2">
+                            {finalAvatar && (
+                                <Avatar className="h-4 w-4 rounded-none">
+                                    <AvatarImage src={finalAvatar} />
+                                    <AvatarFallback className="text-[10px] bg-slate-100 text-slate-500">
+                                        {(item.model)?.charAt(0) || "M"}
+                                    </AvatarFallback>
+                                </Avatar>
+                            )}
+                            <span className="text-slate-700">{item.model}</span>
+                        </div>
+                    ),
+                    value: item.model
+                }
+            })
+            .sort((a, b) => {
+                const targetProvider = 'OpenAI'
+                if (a.provider === targetProvider && b.provider !== targetProvider) return -1
+                if (a.provider !== targetProvider && b.provider === targetProvider) return 1
+                return 0
+            })
+    }, [allModels, providerList])
+
+    useEffect(() => {
+        Promise.all([
+            getChannelList(),
+            getModelProviders(),
+            getModelList()
+        ]).then(([list, providerData, modelListData]) => {
+            setChannelList(list)
+            setProviderList(providerData)
+            if (Array.isArray(modelListData)) {
+                setAllModels(modelListData)
+            }
+        }).catch(() => { })
+    }, [])
+
+    const init = useRef(false)
 
     useEffect(() => {
         fetchLogs()
-    }, [page, channel, status]) // Basic dependencies, could add more filters
+    }, [page])
+
+    useEffect(() => {
+        if (!init.current) {
+            init.current = true
+            return
+        }
+        if (page === 1) {
+            fetchLogs()
+        } else {
+            setPage(1)
+        }
+    }, [channel, model, status, dateRange])
 
     const fetchLogs = async () => {
         setLoading(true)
         try {
-            const res = await api.get(`/models/logs?page=${page}&limit=20`)
-            const mappedLogs = res.data.logs.map((log: any) => ({
-                id: log.id,
-                channelName: log.provider || 'Unknown',
-                modelName: log.modelName,
-                tokens: `${log.inputTokens} / ${log.outputTokens}`,
-                duration: `${log.duration}ms`,
-                status: log.status === 'success' ? 200 : 500,
-                requestTime: new Date(log.createdAt).toLocaleString(),
-                error: log.error,
-                requestIp: "-", // Not stored yet
-                endpoint: "-", // Not stored yet
-                ttft: "-" // Not stored yet
-            }))
+            const res = await getChannelLog({
+                channel: channel || undefined,
+                model_name: model || undefined,
+                code_type: status || 'all',
+                start_timestamp: dateRange?.from?.getTime() || 0,
+                end_timestamp: dateRange?.to?.getTime() || 0,
+                offset: (page - 1) * pageSize,
+                pageSize: pageSize
+            })
+
+            const mappedLogs = res.list.map((log: any) => {
+                const cName = channelList.find(c => `${c.id}` === `${log.channel}`)?.name || log.channel
+                return {
+                    id: log.id,
+                    channelName: `${cName}`,
+                    modelName: log.model,
+                    tokens: `${log.usage?.input_tokens || 0} / ${log.usage?.output_tokens || 0}`,
+                    duration: `${((log.created_at - log.request_at) / 1000).toFixed(2)}s`,
+                    status: log.code === 200 ? 200 : log.code,
+                    requestTime: new Date(log.request_at).toLocaleString(),
+                    error: log.content,
+                    requestIp: log.ip || "-",
+                    endpoint: log.endpoint || "-",
+                    ttft: log.ttfb_milliseconds ? `${log.ttfb_milliseconds}ms` : "-"
+                }
+            })
             setLogs(mappedLogs)
-            setTotal(res.data.total)
+            setTotal(res.total)
         } catch (error) {
             toast.error("获取日志失败")
         } finally {
@@ -162,14 +241,6 @@ export default function ModelLogTab() {
         }
     ], [])
 
-    // Client-side filtering for search (optional, better to do server-side)
-    const filteredLogs = useMemo(() => {
-        return logs.filter(item => {
-            const matchesSearch = search ? item.id.includes(search) || item.modelName.includes(search) : true
-            return matchesSearch
-        })
-    }, [logs, search])
-
     return (
         <div className="flex flex-col h-full gap-4">
             <div className="flex items-center flex-wrap gap-4 bg-white p-1">
@@ -184,22 +255,22 @@ export default function ModelLogTab() {
                 <SelectDropdown
                     value={channel}
                     onChange={setChannel}
-                    options={CHANNEL_OPTIONS}
-                    placeholder="渠道名"
+                    options={channelOptions}
+                    placeholder="渠道名称"
                     width="w-[160px]"
                 />
 
-                {/* Model options should ideally be dynamic based on available models */}
-                <Input 
+                <SelectDropdown
                     value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    placeholder="模型名"
-                    className="w-[160px] h-9"
+                    onChange={setModel}
+                    options={modelOptions}
+                    placeholder="模型名称"
+                    width="w-[160px]"
                 />
 
                 <SelectDropdown
                     value={status}
-                    onChange={setStatus}
+                    onChange={(val) => setStatus(val as any)}
                     options={STATUS_OPTIONS}
                     placeholder="状态"
                     width="w-[120px]"
@@ -207,30 +278,21 @@ export default function ModelLogTab() {
 
                 <div className="flex-1" />
 
-                <div className="relative w-[300px]">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <Input
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="根据 ID 或模型搜索"
-                        className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
-                    />
-                </div>
                 <Button variant="outline" size="sm" onClick={fetchLogs}>
                     刷新
                 </Button>
             </div>
 
             {/* Data Table */}
-            <div className="bg-white rounded-lg overflow-hidden flex flex-col min-h-[200px]">
+            <div className="flex-1 min-h-0 bg-white rounded-lg overflow-auto">
                 {loading ? (
-                    <div className="flex-1 flex items-center justify-center">
+                    <div className="h-full flex items-center justify-center p-8">
                         <Loader2 className="animate-spin h-8 w-8 text-muted-foreground" />
                     </div>
                 ) : (
                     <DataTable
                         columns={columns}
-                        dataSource={filteredLogs}
+                        dataSource={logs}
                         rowKey="id"
                         className="w-full"
                         rowClassName="hover:bg-slate-50/50 transition-colors group"
@@ -241,22 +303,22 @@ export default function ModelLogTab() {
 
             {/* Pagination Controls */}
             <div className="flex justify-center py-4 space-x-2">
-                <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setPage(p => Math.max(1, p - 1))} 
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1 || loading}
                 >
                     上一页
                 </Button>
                 <span className="py-2 text-sm text-muted-foreground">
-                    第 {page} 页 / 共 {Math.ceil(total / 20) || 1} 页
+                    第 {page} 页 / 共 {Math.ceil(total / pageSize) || 1} 页
                 </span>
-                <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setPage(p => p + 1)} 
-                    disabled={page * 20 >= total || loading}
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={page * pageSize >= total || loading}
                 >
                     下一页
                 </Button>

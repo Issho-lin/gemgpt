@@ -36,4 +36,14 @@ export class AiproxyController {
     deleteChannel(@Param('id') id: string) {
         return this.aiproxyService.proxyRequest('DELETE', `/channel/${id}`);
     }
+
+    @Get('logs/search')
+    searchLogs(@Query() query: any) {
+        return this.aiproxyService.proxyRequest('GET', '/logs/search', query);
+    }
+
+    @Get('logs/detail/:id')
+    getLogDetail(@Param('id') id: string) {
+        return this.aiproxyService.proxyRequest('GET', `/logs/detail/${id}`);
+    }
 }

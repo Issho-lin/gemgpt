@@ -66,3 +66,36 @@ export const getTestModel = async (channelId: number, model?: string) => {
     const res = await api.get('/core/ai/model/test', { params: { model, channelId } });
     return res.data?.data || res.data;
 };
+
+export const getChannelLog = async (params: {
+    request_id?: string;
+    channel?: string;
+    model_name?: string;
+    code_type?: 'all' | 'success' | 'error';
+    start_timestamp: number;
+    end_timestamp: number;
+    offset: number;
+    pageSize: number;
+}) => {
+    const res = await api.get('/core/aiproxy/logs/search', {
+        params: {
+            result_only: true,
+            request_id: params.request_id,
+            channel: params.channel,
+            model_name: params.model_name,
+            code_type: params.code_type,
+            start_timestamp: params.start_timestamp,
+            end_timestamp: params.end_timestamp,
+            p: Math.floor(params.offset / params.pageSize) + 1,
+            per_page: params.pageSize
+        }
+    });
+    const logs = res.data?.data?.logs || res.data?.logs || [];
+    const total = res.data?.data?.total || res.data?.total || 0;
+    return { list: logs, total };
+};
+
+export const getLogDetail = async (id: number | string) => {
+    const res = await api.get(`/core/aiproxy/logs/detail/${id}`);
+    return res.data?.data || res.data;
+};
