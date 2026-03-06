@@ -99,3 +99,15 @@ export const getLogDetail = async (id: number | string) => {
     const res = await api.get(`/core/aiproxy/logs/detail/${id}`);
     return res.data?.data || res.data;
 };
+
+export const getDashboardV2 = async (params: {
+    channel?: number | string;
+    model?: string;
+    start_timestamp?: number;
+    end_timestamp?: number;
+    timezone: string;
+    timespan: 'day' | 'hour' | 'minute';
+}) => {
+    const res = await api.get('/core/aiproxy/dashboardv2/', { params });
+    return res.data?.data || res.data || [];
+};

@@ -46,4 +46,9 @@ export class AiproxyController {
     getLogDetail(@Param('id') id: string) {
         return this.aiproxyService.proxyRequest('GET', `/logs/detail/${id}`);
     }
+
+    @Get('dashboardv2')
+    getDashboardV2(@Query() query: any) {
+        return this.aiproxyService.proxyRequest('GET', '/dashboardv2/', query);
+    }
 }

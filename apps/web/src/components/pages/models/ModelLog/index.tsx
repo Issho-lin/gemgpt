@@ -257,7 +257,7 @@ export default function ModelLogTab() {
                     onChange={setChannel}
                     options={channelOptions}
                     placeholder="渠道名称"
-                    width="w-[160px]"
+                    width="w-[180px]"
                 />
 
                 <SelectDropdown
@@ -265,7 +265,7 @@ export default function ModelLogTab() {
                     onChange={setModel}
                     options={modelOptions}
                     placeholder="模型名称"
-                    width="w-[160px]"
+                    width="w-[180px]"
                 />
 
                 <SelectDropdown
