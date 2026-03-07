@@ -1,6 +1,14 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { AiproxyService } from './aiproxy.service';
 import { AuthGuard } from '@nestjs/passport';
+import {
+    GetChannelsQueryDto,
+    CreateChannelDto,
+    UpdateChannelStatusDto,
+    UpdateChannelDto,
+    SearchLogsQueryDto,
+    DashboardQueryDto
+} from './dto/aiproxy.dto';
 
 @Controller('core/aiproxy')
 @UseGuards(AuthGuard('jwt'))
@@ -8,7 +16,7 @@ export class AiproxyController {
     constructor(private readonly aiproxyService: AiproxyService) { }
 
     @Get('channels/all')
-    getChannelsAll(@Query() query: any) {
+    getChannelsAll(@Query() query: GetChannelsQueryDto) {
         return this.aiproxyService.proxyRequest('GET', '/channels/all', query);
     }
 
@@ -18,17 +26,17 @@ export class AiproxyController {
     }
 
     @Post('createChannel')
-    createChannel(@Body() body: any) {
+    createChannel(@Body() body: CreateChannelDto) {
         return this.aiproxyService.proxyRequest('POST', '/channel/', undefined, body);
     }
 
     @Post('channel/:id/status')
-    updateChannelStatus(@Param('id') id: string, @Body() body: any) {
+    updateChannelStatus(@Param('id') id: string, @Body() body: UpdateChannelStatusDto) {
         return this.aiproxyService.proxyRequest('POST', `/channel/${id}/status`, undefined, body);
     }
 
     @Put('channel/:id')
-    updateChannel(@Param('id') id: string, @Body() body: any) {
+    updateChannel(@Param('id') id: string, @Body() body: UpdateChannelDto) {
         return this.aiproxyService.proxyRequest('PUT', `/channel/${id}`, undefined, body);
     }
 
@@ -38,7 +46,7 @@ export class AiproxyController {
     }
 
     @Get('logs/search')
-    searchLogs(@Query() query: any) {
+    searchLogs(@Query() query: SearchLogsQueryDto) {
         return this.aiproxyService.proxyRequest('GET', '/logs/search', query);
     }
 
@@ -48,7 +56,7 @@ export class AiproxyController {
     }
 
     @Get('dashboardv2')
-    getDashboardV2(@Query() query: any) {
+    getDashboardV2(@Query() query: DashboardQueryDto) {
         return this.aiproxyService.proxyRequest('GET', '/dashboardv2/', query);
     }
 }

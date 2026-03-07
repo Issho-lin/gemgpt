@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { AppModel, Prisma } from '@prisma/client';
 import axios from 'axios';
+import { UpdateDefaultModelsDto } from './dto/app-models.dto';
 
 @Injectable()
 export class AppModelsService {
@@ -263,7 +264,7 @@ export class AppModelsService {
   /**
    * 更新默认模型配置
    */
-  async updateDefaultModels(data: any) {
+  async updateDefaultModels(data: UpdateDefaultModelsDto) {
     const { llm, embedding, tts, stt, rerank, datasetTextLLM, datasetImageLLM } = data;
 
     // clear all defaults first

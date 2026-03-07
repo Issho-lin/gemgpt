@@ -2,13 +2,14 @@ import { Controller, Post, Body, Get, UseGuards, Request, UnauthorizedException 
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Prisma } from '@prisma/client';
+import { LoginDto } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post('login')
-  async login(@Body() body: any) {
+  async login(@Body() body: LoginDto) {
     const user = await this.authService.validateUser(body.username, body.password);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');

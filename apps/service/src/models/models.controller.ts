@@ -2,14 +2,15 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, 
 import { ModelsService } from './models.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Prisma } from '@prisma/client';
+import { TestConnectionDto } from './dto/models.dto';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('models')
 export class ModelsController {
-  constructor(private readonly modelsService: ModelsService) {}
+  constructor(private readonly modelsService: ModelsService) { }
 
   @Post('test')
-  testConnection(@Body() config: any) {
+  testConnection(@Body() config: TestConnectionDto) {
     return this.modelsService.testConnection(config);
   }
 

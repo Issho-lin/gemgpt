@@ -3,6 +3,7 @@ import { AppModelsService } from './app-models.service';
 import { AiproxyService } from '../aiproxy/aiproxy.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Prisma } from '@prisma/client';
+import { UpdateDefaultModelsDto, ToggleActiveDto } from './dto/app-models.dto';
 
 @Controller('core/ai/model')
 export class AppModelsController {
@@ -66,13 +67,13 @@ export class AppModelsController {
 
   @Patch('default')
   @UseGuards(AuthGuard('jwt'))
-  updateDefault(@Body() data: any) {
+  updateDefault(@Body() data: UpdateDefaultModelsDto) {
     return this.appModelsService.updateDefaultModels(data);
   }
 
   @Patch('toggle')
   @UseGuards(AuthGuard('jwt'))
-  toggleActive(@Body() data: { model: string, isActive: boolean }) {
+  toggleActive(@Body() data: ToggleActiveDto) {
     return this.appModelsService.toggleActive(data.model, data.isActive);
   }
 }
