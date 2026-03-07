@@ -3,6 +3,15 @@ import { KnowledgeService } from './knowledge.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Prisma } from '@prisma/client';
 
+type CreateGeneralKnowledgeBody = {
+  name: string;
+  intro?: string;
+  avatar?: string;
+  vectorModel?: string;
+  agentModel?: string;
+  vlmModel?: string;
+};
+
 @UseGuards(AuthGuard('jwt'))
 @Controller('knowledge-bases')
 export class KnowledgeController {
@@ -11,6 +20,11 @@ export class KnowledgeController {
   @Post()
   create(@Request() req, @Body() createDto: Prisma.KnowledgeBaseCreateWithoutUserInput) {
     return this.knowledgeService.create(req.user.id, createDto);
+  }
+
+  @Post('general')
+  createGeneral(@Request() req, @Body() body: CreateGeneralKnowledgeBody) {
+    return this.knowledgeService.createGeneral(req.user.id, body);
   }
 
   @Get()
@@ -24,7 +38,11 @@ export class KnowledgeController {
   }
 
   @Patch(':id')
-  update(@Request() req, @Param('id') id: string, @Body() updateDto: Prisma.KnowledgeBaseUpdateWithoutUserInput) {
+  update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() updateDto: Prisma.KnowledgeBaseUpdateWithoutUserInput
+  ) {
     return this.knowledgeService.update(req.user.id, id, updateDto);
   }
 

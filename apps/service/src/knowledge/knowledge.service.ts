@@ -1,6 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+
+type CreateGeneralKnowledgeInput = {
+  name: string;
+  intro?: string;
+  avatar?: string;
+  vectorModel?: string;
+  agentModel?: string;
+  vlmModel?: string;
+};
 
 @Injectable()
 export class KnowledgeService {
@@ -15,12 +24,35 @@ export class KnowledgeService {
     });
   }
 
+  async createGeneral(userId: string, data: CreateGeneralKnowledgeInput) {
+    const name = data.name?.trim();
+
+    if (!name) {
+      throw new BadRequestException('Knowledge base name is required');
+    }
+
+    return this.prisma.knowledgeBase.create({
+      data: {
+        userId,
+        name,
+        description: data.intro?.trim() || null,
+        type: 'general',
+        config: {
+          avatar: data.avatar,
+          vectorModel: data.vectorModel,
+          agentModel: data.agentModel,
+          vlmModel: data.vlmModel
+        }
+      }
+    });
+  }
+
   async findAll(userId: string) {
     return this.prisma.knowledgeBase.findMany({
       where: { userId },
       include: {
         _count: {
-            select: { documents: true }
+          select: { documents: true }
         }
       }
     });
