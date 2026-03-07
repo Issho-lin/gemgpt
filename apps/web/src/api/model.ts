@@ -19,3 +19,9 @@ export const deleteCustomModel = async (id: string) => {
     const res = await api.delete('/core/ai/model/delete', { params: { id } });
     return res.data?.data || res.data;
 };
+
+export const putUpdateDefaultModels = async (data: any) => {
+    const res = await api.patch('/core/ai/model/default', data);
+    return res.data?.data || res.data;
+};
+

@@ -137,6 +137,9 @@ export class AppModelsService {
           toolChoice: model.toolChoice,
           isActive: localConfigInfo.isActive ?? model.isActive ?? false,
           isCustom: localConfigInfo.isCustom ?? model.isCustom ?? false,
+          isDefault: localConfigInfo.isDefault ?? model.isDefault ?? false,
+          isDefaultDatasetTextModel: localConfigInfo.isDefaultDatasetTextModel ?? model.isDefaultDatasetTextModel ?? false,
+          isDefaultDatasetImageModel: localConfigInfo.isDefaultDatasetImageModel ?? model.isDefaultDatasetImageModel ?? false,
         };
       });
     }
@@ -158,6 +161,9 @@ export class AppModelsService {
         toolChoice: configInfo.toolChoice,
         isActive: configInfo.isActive ?? false,
         isCustom: configInfo.isCustom ?? false,
+        isDefault: configInfo.isDefault ?? false,
+        isDefaultDatasetTextModel: configInfo.isDefaultDatasetTextModel ?? false,
+        isDefaultDatasetImageModel: configInfo.isDefaultDatasetImageModel ?? false,
       };
     });
   }
@@ -253,4 +259,60 @@ export class AppModelsService {
 
     return result.sort((a, b) => a.order - b.order);
   }
+
+  /**
+   * 更新默认模型配置
+   */
+  async updateDefaultModels(data: any) {
+    const { llm, embedding, tts, stt, rerank, datasetTextLLM, datasetImageLLM } = data;
+
+    // clear all defaults first
+    const localModels = await this.prisma.appModel.findMany();
+    for (const m of localModels) {
+      const conf = (m.config as any) || {};
+      if (conf.isDefault || conf.isDefaultDatasetTextModel || conf.isDefaultDatasetImageModel) {
+        delete conf.isDefault;
+        delete conf.isDefaultDatasetTextModel;
+        delete conf.isDefaultDatasetImageModel;
+        await this.prisma.appModel.update({ where: { model: m.model }, data: { config: conf } });
+      }
+    }
+
+    const pluginModels = await this.fetchFromPlugin() || [];
+
+    const setFlag = async (model: string, flagType: 'isDefault' | 'isDefaultDatasetTextModel' | 'isDefaultDatasetImageModel') => {
+      if (!model) return;
+      const existing = await this.prisma.appModel.findUnique({ where: { model } });
+      if (existing) {
+        const conf = (existing.config as any) || {};
+        conf[flagType] = true;
+        await this.prisma.appModel.update({ where: { model }, data: { config: conf } });
+      } else {
+        const pluginModel = pluginModels.find((m: any) => m.model === model);
+        if (pluginModel) {
+          await this.prisma.appModel.create({
+            data: {
+              model,
+              name: pluginModel.name || model,
+              type: pluginModel.type || 'llm',
+              provider: pluginModel.provider || 'unknown',
+              charsPointsPrice: pluginModel.charsPointsPrice || 0,
+              config: { ...pluginModel, [flagType]: true }
+            }
+          });
+        }
+      }
+    };
+
+    if (llm) await setFlag(llm, 'isDefault');
+    if (embedding) await setFlag(embedding, 'isDefault');
+    if (tts) await setFlag(tts, 'isDefault');
+    if (stt) await setFlag(stt, 'isDefault');
+    if (rerank) await setFlag(rerank, 'isDefault');
+    if (datasetTextLLM) await setFlag(datasetTextLLM, 'isDefaultDatasetTextModel');
+    if (datasetImageLLM) await setFlag(datasetImageLLM, 'isDefaultDatasetImageModel');
+
+    return { success: true };
+  }
 }
+

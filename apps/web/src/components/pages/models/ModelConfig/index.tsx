@@ -106,6 +106,9 @@ export default function ModelConfigTab() {
                     tagColor: typeInfo.tagColor,
                     isActive: m.isActive ?? false,
                     isCustom: m.isCustom ?? false,
+                    isDefault: m.isDefault ?? false,
+                    isDefaultDatasetTextModel: m.isDefaultDatasetTextModel ?? false,
+                    isDefaultDatasetImageModel: m.isDefaultDatasetImageModel ?? false,
                     contextToken: m.contextToken,
                     vision: m.vision,
                     toolChoice: m.toolChoice,
@@ -437,6 +440,8 @@ export default function ModelConfigTab() {
             <DefaultModelModal
                 open={showDefaultModal}
                 onOpenChange={setShowDefaultModal}
+                models={models}
+                fetchConfigs={fetchConfigs}
             />
             <ConfigFileModal
                 open={showConfigModal}

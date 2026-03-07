@@ -64,6 +64,12 @@ export class AppModelsController {
     return this.appModelsService.remove(id);
   }
 
+  @Patch('default')
+  @UseGuards(AuthGuard('jwt'))
+  updateDefault(@Body() data: any) {
+    return this.appModelsService.updateDefaultModels(data);
+  }
+
   @Patch('toggle')
   @UseGuards(AuthGuard('jwt'))
   toggleActive(@Body() data: { model: string, isActive: boolean }) {
