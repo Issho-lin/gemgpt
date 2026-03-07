@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Delete, Query, Patch, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Delete, Query, Patch } from '@nestjs/common';
 import { AppModelsService } from './app-models.service';
 import { AiproxyService } from '../aiproxy/aiproxy.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -34,9 +34,10 @@ export class AppModelsController {
   @UseGuards(AuthGuard('jwt'))
   async testModel(
     @Query('model') model: string,
-    @Query('channelId', ParseIntPipe) channelId: number,
+    @Query('channelId') channelIdStr?: string,
     @Query('modelType') modelType?: string,
   ) {
+    const channelId = channelIdStr ? parseInt(channelIdStr, 10) : undefined;
     // 若前端未传 modelType，则从模型列表自动推断
     let resolvedType = modelType;
     if (!resolvedType) {

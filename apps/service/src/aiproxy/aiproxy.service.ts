@@ -44,7 +44,7 @@ export class AiproxyService {
      * Test a specific model through a specific channel.
      * References the 'Aiproxy-Channel' header to route the request to the target channel.
      */
-    async testModel(channelId: number, model: string, modelType?: string) {
+    async testModel(channelId: number | undefined, model: string, modelType?: string) {
         if (!this.baseUrl || !this.token) {
             throw new HttpException('AIPROXY service config is missing', HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -53,11 +53,13 @@ export class AiproxyService {
         // The OpenAI-compatible endpoint is at the root (e.g. http://host:3010/v1/...)
         const openaiBase = this.baseUrl.replace(/\/api\/?$/, '');
 
-        const headers = {
+        const headers: Record<string, string> = {
             'Authorization': `Bearer ${this.token}`,
             'Content-Type': 'application/json',
-            'Aiproxy-Channel': String(channelId),
         };
+        if (channelId) {
+            headers['Aiproxy-Channel'] = String(channelId);
+        }
 
         try {
             const start = Date.now();

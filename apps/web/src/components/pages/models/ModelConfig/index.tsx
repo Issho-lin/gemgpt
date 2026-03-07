@@ -31,6 +31,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { getModelProviders, getModelList, toggleModelActive, deleteCustomModel } from "@/api/model"
+import { getTestModel } from "@/api/aiproxy"
 import { toast } from "sonner"
 
 export default function ModelConfigTab() {
@@ -48,6 +49,7 @@ export default function ModelConfigTab() {
     const [showSTTEditModal, setShowSTTEditModal] = useState(false)
     const [showReRankEditModal, setShowReRankEditModal] = useState(false)
     const [isEdit, setIsEdit] = useState(false)
+    const [testingModel, setTestingModel] = useState<string | null>(null)
 
     useEffect(() => {
         fetchConfigs()
@@ -160,6 +162,18 @@ export default function ModelConfigTab() {
         }
     }
 
+    const handleTestModel = async (modelName: string) => {
+        setTestingModel(modelName)
+        try {
+            await getTestModel(undefined as any, modelName)
+            toast.success("测试成功")
+        } catch (error: any) {
+            toast.error(error.message || "测试失败")
+        } finally {
+            setTestingModel(null)
+        }
+    }
+
     const columns: ColumnDef<ConfigModelItem>[] = useMemo(() => [
         {
             title: (
@@ -240,8 +254,16 @@ export default function ModelConfigTab() {
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button className="p-1.5 rounded-md text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all cursor-pointer">
-                                    <Send size={14} />
+                                <button
+                                    className="flex items-center justify-center p-1.5 rounded-md text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                                    onClick={() => handleTestModel(model.modelName)}
+                                    disabled={testingModel === model.modelName}
+                                >
+                                    {testingModel === model.modelName ? (
+                                        <Loader2 size={14} className="animate-spin text-blue-500" />
+                                    ) : (
+                                        <Send size={14} />
+                                    )}
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -298,7 +320,7 @@ export default function ModelConfigTab() {
                 </div>
             ),
         },
-    ], [activeCount]) // Removed toggleActive from dependency array to avoid re-renders causing issues
+    ], [activeCount, testingModel]) // Removed toggleActive from dependency array to avoid re-renders causing issues
 
 
 
@@ -357,13 +379,13 @@ export default function ModelConfigTab() {
                 >
                     默认模型
                 </Button>
-                <Button
+                {/* <Button
                     variant="outline"
                     onClick={() => setShowConfigModal(true)}
                     className="h-9 px-4 text-sm font-medium text-slate-700 bg-white border-slate-200 hover:bg-slate-50"
                 >
                     配置文件
-                </Button>
+                </Button> */}
                 <HoverCard openDelay={0} closeDelay={100}>
                     <HoverCardTrigger asChild>
                         <Button className="h-9 px-4 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600">
