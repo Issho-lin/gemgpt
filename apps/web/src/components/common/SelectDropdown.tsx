@@ -17,6 +17,7 @@ export function SelectDropdown({
     placeholder = "请选择",
     width = "w-[160px]",
     allowClear = true,
+    className
 }: {
     value: string
     onChange: (value: string) => void
@@ -24,6 +25,7 @@ export function SelectDropdown({
     placeholder?: string
     width?: string
     allowClear?: boolean
+    className?: string
 }) {
     const [open, setOpen] = React.useState(false)
     const [hovered, setHovered] = React.useState(false)
@@ -45,7 +47,8 @@ export function SelectDropdown({
                     "flex h-9 items-center justify-between whitespace-nowrap rounded-lg border border-slate-200 bg-[#f9fafc] px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-ring focus:bg-white disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
                     "hover:bg-slate-50",
                     !selectValue && "text-slate-400",
-                    width
+                    width,
+                    className
                 )}
                 onMouseEnter={() => setHovered(true)}
                 onMouseLeave={() => setHovered(false)}

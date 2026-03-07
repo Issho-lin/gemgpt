@@ -1,22 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, FileText, Loader2, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 import Stepper from '@/components/common/Stepper';
-import FileUploadDropzone from '@/components/common/FileUploadDropzone';
-import { DataTable, type ColumnDef } from '@/components/common/DataTable';
 import { createKnowledgeDocument, getKnowledgeUploadPresignedUrl } from '@/api/knowledge';
 
-type UploadItem = {
-  id: string;
-  name: string;
-  size: string;
-  progress: number;
-  isUploading: boolean;
-  errorMsg?: string;
-  objectKey?: string;
-};
+// Import split components
+import { ImportFileUploadStep, type UploadItem } from '@/components/pages/knowledge/detail/ImportFileUploadStep';
+import { ImportSettingsStep } from '@/components/pages/knowledge/detail/ImportSettingsStep';
+import { ImportPreviewStep } from '@/components/pages/knowledge/detail/ImportPreviewStep';
+import { ImportConfirmStep } from '@/components/pages/knowledge/detail/ImportConfirmStep';
 
 const formatFileSize = (size: number) => {
   if (size < 1024) return `${size} B`;
@@ -25,18 +18,55 @@ const formatFileSize = (size: number) => {
   return `${(size / 1024 / 1024 / 1024).toFixed(2)} GB`;
 };
 
+const indexSizeOptions = [
+  64, 128, 256, 512, 768, 1024, 1536, 2048, 3072, 4096, 5120, 6144, 7168
+];
+
+const separatorOptions = [
+  { label: '不设置', value: 'none' },
+  { label: '1 个换行符', value: '\\n' },
+  { label: '2 个换行符', value: '\\n\\n' },
+  { label: '句号', value: '.|。' },
+  { label: '感叹号', value: '!|！' },
+  { label: '问号', value: '?|？' },
+  { label: '分号', value: ';|；' },
+  { label: '=====', value: '=====' },
+  { label: '自定义', value: 'Other' }
+];
+
 export default function KnowledgeImportPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const knowledgeId = searchParams.get('id') || '';
 
   const [files, setFiles] = useState<UploadItem[]>([]);
+  const [step, setStep] = useState(1);
+
+  // Settings states
+  const [trainingType, setTrainingType] = useState('chunk');
+  const [chunkTriggerType, setChunkTriggerType] = useState('minSize');
+  const [chunkTriggerMinSize, setChunkTriggerMinSize] = useState('1000');
+  const [indexPrefixTitle, setIndexPrefixTitle] = useState(false);
+  const [autoIndexes, setAutoIndexes] = useState(false);
+  const [imageIndex, setImageIndex] = useState(false);
+  const [chunkParams, setChunkParams] = useState('auto'); // auto | custom
+  const [customChunkType, setCustomChunkType] = useState('paragraph'); // paragraph | length | separator
+  const [llmParagraphMode, setLlmParagraphMode] = useState('disabled');
+  const [maxParagraphDepth, setMaxParagraphDepth] = useState('5');
+  const [maxChunkSize, setMaxChunkSize] = useState('1000');
+  const [indexSize, setIndexSize] = useState('512');
+  const [customSeparator, setCustomSeparator] = useState('\\n');
+  const [selectedSeparator, setSelectedSeparator] = useState(separatorOptions[1].value);
+  const [qaPrompt, setQaPrompt] = useState(`<Context></Context> 标记中是一段文本，学习并分析它，并整理学习成果：
+- 提出问题并给出每个问题的答案。
+- 答案需详细完整，尽可能保留原文描述，可以适当扩展答案描述。
+- 答案可以包含普通文字、链接、代码、表格、公示、媒体链接等 Markdown 元素。
+- 最多提出 50 个问题。
+- 生成的问题和答案和源文本语言相同。`);
 
   const isUploading = files.some((item) => item.isUploading);
   const successFiles = files.filter((item) => item.progress === 100 && !item.errorMsg);
-  const canNext = successFiles.length > 0 && !isUploading;
-
-  const nextText = useMemo(() => `共 ${files.length} 个文件 | 下一步`, [files.length]);
+  const canNext = step === 1 ? successFiles.length > 0 && !isUploading : true;
 
   const removeFile = (id: string) => {
     setFiles((prev) => prev.filter((file) => file.id !== id));
@@ -86,8 +116,8 @@ export default function KnowledgeImportPage() {
         errorMsg: undefined,
         objectKey
       });
-    } catch (error: any) {
-      const errMsg = error?.response?.data?.message || error?.message || '上传失败';
+    } catch (error: unknown) {
+      const errMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || (error as Error)?.message || '上传失败';
       setFileState(fileId, {
         isUploading: false,
         errorMsg: String(errMsg)
@@ -124,61 +154,48 @@ export default function KnowledgeImportPage() {
     );
   };
 
-  const columns: ColumnDef<UploadItem>[] = [
+  const chunkTriggerOptions = [
+    { label: '原文长度大于', value: 'minSize' },
+    { label: '原文长度大于文件处理模型最大上下文70%', value: 'maxSize' },
+    { label: '强制分块', value: 'forceChunk' }
+  ];
+
+  const llmParagraphOptions = [
     {
-      title: '文件名',
-      key: 'name',
-      width: '50%',
-      render: (_, file) => (
-        <div className="flex items-center gap-2 text-slate-700 min-w-0">
-          <FileText size={14} className="text-slate-500 shrink-0" />
-          <span className="truncate">{file.name}</span>
+      value: 'auto',
+      label: (
+        <div className="flex flex-col py-1">
+          <div className="font-medium">自动</div>
+          <div className="text-xs text-slate-500 select-desc">当文本内容不含 Markdown 标题时，启用模型识别。</div>
         </div>
       )
     },
     {
-      title: '文件上传进度',
-      key: 'progress',
-      width: '25%',
-      render: (_, file) => (
-        <div className="pr-4">
-          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${file.progress}%` }} />
-          </div>
-          <div className="mt-1 text-xs text-slate-500 flex items-center gap-1">
-            {file.isUploading && <Loader2 size={12} className="animate-spin" />}
-            {file.errorMsg ? <span className="text-red-500 truncate">{file.errorMsg}</span> : `${file.progress}%`}
-          </div>
+      value: 'disabled',
+      label: (
+        <div className="flex flex-col py-1">
+          <div className="font-medium">禁用</div>
+          <div className="text-xs text-slate-500 select-desc">强制禁用模型自动识别段落</div>
         </div>
       )
     },
     {
-      title: '文件大小',
-      dataIndex: 'size',
-      key: 'size',
-      width: '15%',
-      className: 'text-slate-600'
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 80,
-      headerClassName: 'text-center',
-      className: 'text-center',
-      render: (_, file) => (
-        <div className="flex justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-slate-500"
-            onClick={() => removeFile(file.id)}
-          >
-            <Trash2 size={14} />
-          </Button>
+      value: 'force',
+      label: (
+        <div className="flex flex-col py-1">
+          <div className="font-medium">强制处理</div>
+          <div className="text-xs text-slate-500 select-desc">强制使用模型自动识别段落，并忽略原文本的段落（如有）</div>
         </div>
       )
     }
   ];
+
+  const indexSizeSelectOptions = useMemo(() =>
+    indexSizeOptions.map(size => ({ label: String(size), value: String(size) })),
+    []
+  );
+
+  const separatorSelectOptions = separatorOptions;
 
   return (
     <div className="h-full bg-slate-50 p-4">
@@ -194,35 +211,67 @@ export default function KnowledgeImportPage() {
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
-          <Stepper currentStep={1} steps={['选择文件', '参数设置', '数据预览', '确认上传']} />
+          <Stepper currentStep={step} steps={['选择文件', '参数设置', '数据预览', '确认上传']} />
 
-          <FileUploadDropzone
-            accept=".txt,.doc,.docx,.csv,.xlsx,.xls,.pdf,.md,.html,.ppt,.pptx"
-            multiple
-            onFilesSelect={handleFilesSelect}
-          />
+          {step === 1 && (
+            <ImportFileUploadStep
+              files={files}
+              onFilesSelect={handleFilesSelect}
+              onRemoveFile={removeFile}
+              onNext={() => setStep(2)}
+              canNext={canNext}
+            />
+          )}
 
-          {files.length > 0 && (
-            <>
-              <div className="rounded-lg border border-slate-200 overflow-hidden">
-                <DataTable
-                  columns={columns}
-                  dataSource={files}
-                  rowKey="id"
-                  emptyText="暂无上传文件"
-                  className="[&_thead_tr]:h-10 [&_tbody_tr]:h-14 [&_tbody_td]:text-sm"
-                />
-              </div>
+          {step === 2 && (
+            <ImportSettingsStep
+              trainingType={trainingType}
+              setTrainingType={setTrainingType}
+              chunkTriggerType={chunkTriggerType}
+              setChunkTriggerType={setChunkTriggerType}
+              chunkTriggerMinSize={chunkTriggerMinSize}
+              setChunkTriggerMinSize={setChunkTriggerMinSize}
+              indexPrefixTitle={indexPrefixTitle}
+              setIndexPrefixTitle={setIndexPrefixTitle}
+              autoIndexes={autoIndexes}
+              setAutoIndexes={setAutoIndexes}
+              imageIndex={imageIndex}
+              setImageIndex={setImageIndex}
+              chunkParams={chunkParams}
+              setChunkParams={setChunkParams}
+              customChunkType={customChunkType}
+              setCustomChunkType={setCustomChunkType}
+              llmParagraphMode={llmParagraphMode}
+              setLlmParagraphMode={setLlmParagraphMode}
+              maxParagraphDepth={maxParagraphDepth}
+              setMaxParagraphDepth={setMaxParagraphDepth}
+              maxChunkSize={maxChunkSize}
+              setMaxChunkSize={setMaxChunkSize}
+              indexSize={indexSize}
+              setIndexSize={setIndexSize}
+              customSeparator={customSeparator}
+              setCustomSeparator={setCustomSeparator}
+              selectedSeparator={selectedSeparator}
+              setSelectedSeparator={setSelectedSeparator}
+              qaPrompt={qaPrompt}
+              setQaPrompt={setQaPrompt}
+              chunkTriggerOptions={chunkTriggerOptions}
+              llmParagraphOptions={llmParagraphOptions}
+              indexSizeSelectOptions={indexSizeSelectOptions}
+              separatorSelectOptions={separatorSelectOptions}
+              onNext={() => setStep(3)}
+            />
+          )}
 
-              <div className="flex justify-end">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white" disabled={!canNext}>
-                  {nextText}
-                </Button>
-              </div>
-            </>
+          {step === 3 && (
+            <ImportPreviewStep onNext={() => setStep(4)} onPrev={() => setStep(2)} />
+          )}
+
+          {step === 4 && (
+            <ImportConfirmStep onPrev={() => setStep(3)} onConfirm={() => console.log('Confirm')} />
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 }
