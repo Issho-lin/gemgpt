@@ -87,6 +87,7 @@ model Document {
   knowledgeBaseId String
   filename        String
   fileType        String   // "pdf", "txt", "md"
+  objectKey       String   // MinIO object key
   status          String   // "pending", "processing", "completed", "failed"
   createdAt       DateTime @default(now())
   

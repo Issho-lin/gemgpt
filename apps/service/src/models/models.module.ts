@@ -12,5 +12,4 @@ import { AiproxyModule } from '../aiproxy/aiproxy.module';
   providers: [ModelsService, AppModelsService],
   exports: [ModelsService, AppModelsService],
 })
-export class ModelsModule { }
-
+export class ModelsModule {}

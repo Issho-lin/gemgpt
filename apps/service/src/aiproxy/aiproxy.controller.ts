@@ -1,62 +1,90 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AiproxyService } from './aiproxy.service';
 import { AuthGuard } from '@nestjs/passport';
 import {
-    GetChannelsQueryDto,
-    CreateChannelDto,
-    UpdateChannelStatusDto,
-    UpdateChannelDto,
-    SearchLogsQueryDto,
-    DashboardQueryDto
+  GetChannelsQueryDto,
+  CreateChannelDto,
+  UpdateChannelStatusDto,
+  UpdateChannelDto,
+  SearchLogsQueryDto,
+  DashboardQueryDto,
 } from './dto/aiproxy.dto';
 
 @Controller('core/aiproxy')
 @UseGuards(AuthGuard('jwt'))
 export class AiproxyController {
-    constructor(private readonly aiproxyService: AiproxyService) { }
+  constructor(private readonly aiproxyService: AiproxyService) {}
 
-    @Get('channels/all')
-    getChannelsAll(@Query() query: GetChannelsQueryDto) {
-        return this.aiproxyService.proxyRequest('GET', '/channels/all', query);
-    }
+  @Get('channels/all')
+  getChannelsAll(@Query() query: GetChannelsQueryDto) {
+    return this.aiproxyService.proxyRequest('GET', '/channels/all', query);
+  }
 
-    @Get('channels/type_metas')
-    getChannelsTypeMetas() {
-        return this.aiproxyService.proxyRequest('GET', '/channels/type_metas');
-    }
+  @Get('channels/type_metas')
+  getChannelsTypeMetas() {
+    return this.aiproxyService.proxyRequest('GET', '/channels/type_metas');
+  }
 
-    @Post('createChannel')
-    createChannel(@Body() body: CreateChannelDto) {
-        return this.aiproxyService.proxyRequest('POST', '/channel/', undefined, body);
-    }
+  @Post('createChannel')
+  createChannel(@Body() body: CreateChannelDto) {
+    return this.aiproxyService.proxyRequest(
+      'POST',
+      '/channel/',
+      undefined,
+      body,
+    );
+  }
 
-    @Post('channel/:id/status')
-    updateChannelStatus(@Param('id') id: string, @Body() body: UpdateChannelStatusDto) {
-        return this.aiproxyService.proxyRequest('POST', `/channel/${id}/status`, undefined, body);
-    }
+  @Post('channel/:id/status')
+  updateChannelStatus(
+    @Param('id') id: string,
+    @Body() body: UpdateChannelStatusDto,
+  ) {
+    return this.aiproxyService.proxyRequest(
+      'POST',
+      `/channel/${id}/status`,
+      undefined,
+      body,
+    );
+  }
 
-    @Put('channel/:id')
-    updateChannel(@Param('id') id: string, @Body() body: UpdateChannelDto) {
-        return this.aiproxyService.proxyRequest('PUT', `/channel/${id}`, undefined, body);
-    }
+  @Put('channel/:id')
+  updateChannel(@Param('id') id: string, @Body() body: UpdateChannelDto) {
+    return this.aiproxyService.proxyRequest(
+      'PUT',
+      `/channel/${id}`,
+      undefined,
+      body,
+    );
+  }
 
-    @Delete('channel/:id')
-    deleteChannel(@Param('id') id: string) {
-        return this.aiproxyService.proxyRequest('DELETE', `/channel/${id}`);
-    }
+  @Delete('channel/:id')
+  deleteChannel(@Param('id') id: string) {
+    return this.aiproxyService.proxyRequest('DELETE', `/channel/${id}`);
+  }
 
-    @Get('logs/search')
-    searchLogs(@Query() query: SearchLogsQueryDto) {
-        return this.aiproxyService.proxyRequest('GET', '/logs/search', query);
-    }
+  @Get('logs/search')
+  searchLogs(@Query() query: SearchLogsQueryDto) {
+    return this.aiproxyService.proxyRequest('GET', '/logs/search', query);
+  }
 
-    @Get('logs/detail/:id')
-    getLogDetail(@Param('id') id: string) {
-        return this.aiproxyService.proxyRequest('GET', `/logs/detail/${id}`);
-    }
+  @Get('logs/detail/:id')
+  getLogDetail(@Param('id') id: string) {
+    return this.aiproxyService.proxyRequest('GET', `/logs/detail/${id}`);
+  }
 
-    @Get('dashboardv2')
-    getDashboardV2(@Query() query: DashboardQueryDto) {
-        return this.aiproxyService.proxyRequest('GET', '/dashboardv2/', query);
-    }
+  @Get('dashboardv2')
+  getDashboardV2(@Query() query: DashboardQueryDto) {
+    return this.aiproxyService.proxyRequest('GET', '/dashboardv2/', query);
+  }
 }

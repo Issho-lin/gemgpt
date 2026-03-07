@@ -9,8 +9,15 @@ import { KnowledgeModule } from './knowledge/knowledge.module';
 import { AiproxyModule } from './aiproxy/aiproxy.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, ModelsModule, KnowledgeModule, AiproxyModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    ModelsModule,
+    KnowledgeModule,
+    AiproxyModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

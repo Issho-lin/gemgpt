@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, UseGuards, Delete, Query, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Delete,
+  Query,
+  Patch,
+} from '@nestjs/common';
 import { AppModelsService } from './app-models.service';
 import { AiproxyService } from '../aiproxy/aiproxy.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -10,7 +19,7 @@ export class AppModelsController {
   constructor(
     private readonly appModelsService: AppModelsService,
     private readonly aiproxyService: AiproxyService,
-  ) { }
+  ) {}
 
   @Get('list')
   findAll() {
@@ -77,4 +86,3 @@ export class AppModelsController {
     return this.appModelsService.toggleActive(data.model, data.isActive);
   }
 }
-

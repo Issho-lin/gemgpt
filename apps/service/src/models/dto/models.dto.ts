@@ -1,5 +1,5 @@
 export class TestConnectionDto {
-    provider!: string;
-    modelName!: string;
-    config!: Record<string, unknown>;
+  provider!: string;
+  modelName!: string;
+  config!: Record<string, unknown>;
 }

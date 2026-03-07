@@ -13,6 +13,7 @@ import PortalPage from "@/pages/portal"
 import ChatPage from "@/pages/chat"
 import KnowledgePage from "@/pages/knowledge"
 import KnowledgeDetailPage from "@/pages/knowledge/detail"
+import KnowledgeImportPage from "@/pages/knowledge/import"
 import AccountLayout from "@/pages/account"
 import ProfilePage from "@/pages/account/profile"
 import ModelsPage from "@/pages/account/models"
@@ -49,6 +50,7 @@ function App() {
 
           <Route path="knowledge" element={<KnowledgePage />} />
           <Route path="knowledge/detail" element={<KnowledgeDetailPage />} />
+          <Route path="knowledge/import" element={<KnowledgeImportPage />} />
           <Route path="account" element={<AccountLayout />}>
             <Route index element={<Navigate to="/app/account/profile" replace />} />
             <Route path="profile" element={<ProfilePage />} />
